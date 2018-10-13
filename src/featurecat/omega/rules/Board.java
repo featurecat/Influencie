@@ -19,18 +19,20 @@ public class Board {
         history = new BoardHistoryList(new BoardData(stones, lastMove, Stone.EMPTY, blackToPlay, new Zobrist(), 0, new int[BOARD_SIZE * BOARD_SIZE]));
     }
 
+//    public SearchData get
+
     /**
      * Check if the position is in the file
      *
      * @param position the position to examine
-     * @param file the file to search the position
+     * @param fileBoard the file to search the position
      * @return true if the position is in the file, false if not
      */
-    public boolean compareBoardPositions(Stone[] position, Stone[] file) {
+    public boolean compareBoardPositions(Stone[] position, Stone[] fileBoard) {
         for (int mode = 0; mode < 8; mode ++) {
             Stone[] symmetricPosition = getSymmetricStones(position, mode);
             for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
-                if (!symmetricPosition[i].equals(Stone.UNSPECIFIED) && !symmetricPosition[i].equals(file[i])) {
+                if (!symmetricPosition[i].equals(Stone.UNSPECIFIED) && !symmetricPosition[i].equals(fileBoard[i])) {
                     break;
                 }
                 else if (i == Board.BOARD_SIZE * Board.BOARD_SIZE - 1) {
