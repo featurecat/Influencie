@@ -1,6 +1,7 @@
 package featurecat.omega.analysis;
 
 import featurecat.omega.Omega;
+import featurecat.omega.rules.Board;
 import featurecat.omega.rules.BoardData;
 import featurecat.omega.rules.BoardHistoryList;
 import featurecat.omega.rules.Stone;
@@ -8,9 +9,10 @@ import featurecat.omega.rules.Stone;
 import java.io.*;
 
 public class SGFParser {
-    public static boolean load(String filename) throws IOException {
+    public static boolean load(String filename, Board... possibleBoard) throws IOException {
         // Clear the board
-        while (Omega.board.previousMove()) ;
+        Board board = possibleBoard.length > 0 ? possibleBoard[0] : Omega.board;
+        while (board.previousMove()) ;
 
         File file = new File(filename);
         if (!file.exists() || !file.canRead()) {
@@ -29,10 +31,10 @@ public class SGFParser {
         }
         reader.close();
         fp.close();
-        return parse(value);
+        return parse(value, board);
     }
 
-    private static boolean parse(String value) {
+    private static boolean parse(String value, Board board) {
         value = value.trim();
         if (value.charAt(0) != '(') {
             return false;
@@ -77,19 +79,19 @@ public class SGFParser {
                     return false;
                 } else if (tag.equals("B")) {
                     if (tagContent.isEmpty() || tagContent.equals("tt")) {
-                        Omega.board.pass(Stone.WHITE);
+                        board.pass(Stone.WHITE);
                     } else {
                         int x = tagContent.charAt(0) - 'a';
                         int y = tagContent.charAt(1) - 'a';
-                        Omega.board.place(x, y, Stone.BLACK);
+                        board.place(x, y, Stone.BLACK);
                     }
                 } else if (tag.equals("W")) {
                     if (tagContent.isEmpty() || tagContent.equals("tt")) {
-                        Omega.board.pass(Stone.WHITE);
+                        board.pass(Stone.WHITE);
                     } else {
                         int x = tagContent.charAt(0) - 'a';
                         int y = tagContent.charAt(1) - 'a';
-                        Omega.board.place(x, y, Stone.WHITE);
+                        board.place(x, y, Stone.WHITE);
                     }
                 }
                 continue;
