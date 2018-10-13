@@ -19,7 +19,10 @@ public class Board {
         history = new BoardHistoryList(new BoardData(stones, lastMove, Stone.EMPTY, blackToPlay, new Zobrist(), 0, new int[BOARD_SIZE * BOARD_SIZE]));
     }
 
-//    public SearchData get
+    public SearchData getMatchedPosition(Stone[] position, String filename) {
+
+        return null;
+    }
 
     /**
      * Check if the position is in the file
@@ -28,7 +31,7 @@ public class Board {
      * @param fileBoard the file to search the position
      * @return true if the position is in the file, false if not
      */
-    public boolean compareBoardPositions(Stone[] position, Stone[] fileBoard) {
+    private boolean compareBoardPositions(Stone[] position, Stone[] fileBoard) {
         for (int mode = 0; mode < 8; mode ++) {
             Stone[] symmetricPosition = getSymmetricStones(position, mode);
             for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
@@ -51,7 +54,7 @@ public class Board {
      *             4-7 flips the board along y=x first and then rotate.
      * @return transformed board
      */
-    public Stone[] getSymmetricStones(Stone[] original, int mode) {
+    private Stone[] getSymmetricStones(Stone[] original, int mode) {
         Stone[] symmetry = new Stone[Board.BOARD_SIZE * Board.BOARD_SIZE];
         if (mode >= 4) {
             for (int x = 0; x < Board.BOARD_SIZE; x++) {
