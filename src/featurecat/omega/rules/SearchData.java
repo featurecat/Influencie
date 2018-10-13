@@ -1,27 +1,13 @@
 package featurecat.omega.rules;
 
+import java.util.ArrayList;
+
 public class SearchData {
-    private Board board;
-    private BoardHistoryNode boardHistoryNode;
+    public Stone[] symmetricPosition;
+    public BoardHistoryList boardHistoryList;
 
-    public SearchData (Board board, BoardHistoryNode boardHistoryNode) {
-        this.board = board;
-        this.boardHistoryNode = boardHistoryNode;
-    }
-
-    public Board getBoard() {
-        return board;
-    }
-
-    public BoardHistoryNode getBoardHistoryNode() {
-        return boardHistoryNode;
-    }
-
-    public void setBoard(Board board) {
-        this.board = board;
-    }
-
-    public void setBoardHistoryNode(BoardHistoryNode boardHistoryNode) {
-        this.boardHistoryNode = boardHistoryNode;
+    public SearchData (Stone[] symmetricPosition, BoardHistoryList boardHistoryList) {
+        this.symmetricPosition = symmetricPosition;
+        this.boardHistoryList = boardHistoryList;
     }
 }

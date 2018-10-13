@@ -4,38 +4,63 @@ import featurecat.omega.analysis.SGFParser;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Search {
-    public SearchData getMatchedPosition(Stone[] position, String filename) {
+
+    /**
+     * Get all matching positions in a file
+     *
+     * @param position the position to match
+     * @param filename the file to search
+     * @return arraylist of all matching positions
+     */
+    public ArrayList<SearchData> getMatchingPositions(Stone[] position, String filename) {
+        Board fileBoard = new Board();
         try {
             System.out.println(filename);
-            SGFParser.load(filename);
+            SGFParser.load(filename, fileBoard);
         } catch (IOException err) {
             JOptionPane.showConfirmDialog(null, "Failed to open the SGF file.", "Error", JOptionPane.ERROR);
         }
-        return null;
+        BoardHistoryList boardHistoryList = fileBoard.getHistory();
+        ArrayList<SearchData> positionList = new ArrayList<SearchData>();
+        while (true) {
+            BoardData boardData = boardHistoryList.next();
+            if (boardData == null) {
+                break;
+            }
+            Stone[] symmetricPosition = compareBoardPositions(position, boardData.stones, boardData.lastMove);
+            if (symmetricPosition != null) {
+                positionList.add(new SearchData(symmetricPosition, boardHistoryList));
+            }
+        }
+        return positionList;
     }
 
     /**
      * Check if the position is in the file
      *
      * @param position the position to examine
-     * @param fileBoard the file to search the position
-     * @return true if the position is in the file, false if not
+     * @param fileStones the file to search the position
+     * @param lastMove last move, must be in the position
+     * @return the symmetric position that the fileStones match
      */
-    private boolean compareBoardPositions(Stone[] position, Stone[] fileBoard) {
+    private Stone[] compareBoardPositions(Stone[] position, Stone[] fileStones, int[] lastMove) {
         for (int mode = 0; mode < 8; mode ++) {
             Stone[] symmetricPosition = getSymmetricStones(position, mode);
             for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
-                if (!symmetricPosition[i].equals(Stone.UNSPECIFIED) && !symmetricPosition[i].equals(fileBoard[i])) {
+                if ((!symmetricPosition[i].equals(Stone.UNSPECIFIED) ||
+                        (i == lastMove[0] * Board.BOARD_SIZE + lastMove[1])) &&
+                        !symmetricPosition[i].equals(fileStones[i])) {
                     break;
                 }
                 else if (i == Board.BOARD_SIZE * Board.BOARD_SIZE - 1) {
-                    return true;
+                    return symmetricPosition;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     /**
