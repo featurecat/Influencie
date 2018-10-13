@@ -61,7 +61,7 @@ public class OmegaFrame extends JFrame {
      * Creates a window
      */
     public OmegaFrame() {
-        super("Lizzie - Leela Zero Interface");
+        super("Omega");
 
         boardRenderer = new BoardRenderer();
 
