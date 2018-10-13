@@ -1,13 +1,12 @@
 package featurecat.omega.ui;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import wagner.stephanie.lizzie.Lizzie;
-import wagner.stephanie.lizzie.analysis.Branch;
-import wagner.stephanie.lizzie.analysis.MoveData;
-import wagner.stephanie.lizzie.rules.Board;
-import wagner.stephanie.lizzie.rules.Stone;
-import wagner.stephanie.lizzie.rules.Zobrist;
+import featurecat.omega.analysis.MoveData;
+import featurecat.omega.rules.Zobrist;
+import featurecat.omega.Omega;
+import featurecat.omega.analysis.MoveData;
+import featurecat.omega.rules.Board;
+import featurecat.omega.rules.Stone;
+import featurecat.omega.rules.Zobrist;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -28,7 +27,6 @@ public class BoardRenderer {
     private int boardLength;
 
     private int scaledMargin, availableLength, squareLength, stoneRadius;
-    private Branch branch;
     private List<MoveData> bestMoves;
 
     private BufferedImage cachedBackgroundImage = null;
@@ -42,15 +40,11 @@ public class BoardRenderer {
     private BufferedImage branchStonesShadowImage = null;
 
 
-    public BoardRenderer() {
-        uiConfig = Lizzie.config.config.getJSONObject("ui");
-    }
-
     /**
      * Draw a go board
      */
     public void draw(Graphics2D g) {
-        if (Lizzie.frame == null || Lizzie.board == null)
+        if (Omega.frame == null || Omega.board == null)
             return;
 
         setupSizeParameters();
@@ -68,7 +62,7 @@ public class BoardRenderer {
 
         drawMoveNumbers(g);
 //        timer.lap("movenumbers");
-        if (!Lizzie.frame.isPlayingAgainstLeelaz)
+        if (!Omega.frame.isPlayingAgainstLeelaz)
             drawLeelazSuggestions(g);
 //        timer.lap("leelaz");
 
@@ -93,11 +87,11 @@ public class BoardRenderer {
      */
     private void drawBackground(Graphics2D g0) {
         // draw the cached background image if frame size changes
-        if (cachedBackgroundImage == null || cachedBackgroundImage.getWidth() != Lizzie.frame.getWidth() ||
-                cachedBackgroundImage.getHeight() != Lizzie.frame.getHeight() ||
-                cachedBackgroundImageHasCoordinatesEnabled != Lizzie.frame.showCoordinates) {
+        if (cachedBackgroundImage == null || cachedBackgroundImage.getWidth() != Omega.frame.getWidth() ||
+                cachedBackgroundImage.getHeight() != Omega.frame.getHeight() ||
+                cachedBackgroundImageHasCoordinatesEnabled != Omega.frame.showCoordinates) {
 
-            cachedBackgroundImage = new BufferedImage(Lizzie.frame.getWidth(), Lizzie.frame.getHeight(),
+            cachedBackgroundImage = new BufferedImage(Omega.frame.getWidth(), Omega.frame.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = cachedBackgroundImage.createGraphics();
 
@@ -130,19 +124,19 @@ public class BoardRenderer {
             }
 
             // draw coordinates if enabled
-            if (Lizzie.frame.showCoordinates) {
+            if (Omega.frame.showCoordinates) {
                 g.setColor(Color.BLACK);
                 String alphabet = "ABCDEFGHJKLMNOPQRST";
                 for (int i = 0; i < Board.BOARD_SIZE; i++) {
-                    drawString(g, x+scaledMargin+squareLength*i, y+scaledMargin/2, "Open Sans", ""+alphabet.charAt(i), stoneRadius*4/5, stoneRadius);
-                    drawString(g, x+scaledMargin+squareLength*i, y-scaledMargin/2+boardLength, "Open Sans", ""+alphabet.charAt(i), stoneRadius*4/5, stoneRadius);
+                    drawString(g, x + scaledMargin + squareLength * i, y + scaledMargin / 2, "Open Sans", "" + alphabet.charAt(i), stoneRadius * 4 / 5, stoneRadius);
+                    drawString(g, x + scaledMargin + squareLength * i, y - scaledMargin / 2 + boardLength, "Open Sans", "" + alphabet.charAt(i), stoneRadius * 4 / 5, stoneRadius);
                 }
                 for (int i = 0; i < Board.BOARD_SIZE; i++) {
-                    drawString(g, x+scaledMargin/2, y+scaledMargin+squareLength*i, "Open Sans", ""+(i+1), stoneRadius*4/5, stoneRadius);
-                    drawString(g, x-scaledMargin/2+ +boardLength, y+scaledMargin+squareLength*i, "Open Sans", ""+(i+1), stoneRadius*4/5, stoneRadius);
+                    drawString(g, x + scaledMargin / 2, y + scaledMargin + squareLength * i, "Open Sans", "" + (i + 1), stoneRadius * 4 / 5, stoneRadius);
+                    drawString(g, x - scaledMargin / 2 + +boardLength, y + scaledMargin + squareLength * i, "Open Sans", "" + (i + 1), stoneRadius * 4 / 5, stoneRadius);
                 }
             }
-            cachedBackgroundImageHasCoordinatesEnabled = Lizzie.frame.showCoordinates;
+            cachedBackgroundImageHasCoordinatesEnabled = Omega.frame.showCoordinates;
             g.dispose();
         }
 
@@ -155,9 +149,9 @@ public class BoardRenderer {
      */
     private void drawStones() {
         // draw a new image if frame size changes or board state changes
-        if (cachedStonesImage==null || cachedStonesImage.getWidth() != boardLength ||
+        if (cachedStonesImage == null || cachedStonesImage.getWidth() != boardLength ||
                 cachedStonesImage.getHeight() != boardLength ||
-                !cachedZhash.equals(Lizzie.board.getData().zobrist)) {
+                !cachedZhash.equals(Omega.board.getData().zobrist)) {
 
             cachedStonesImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
             cachedStonesShadowImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
@@ -172,11 +166,11 @@ public class BoardRenderer {
                 for (int j = 0; j < Board.BOARD_SIZE; j++) {
                     int stoneX = scaledMargin + squareLength * i;
                     int stoneY = scaledMargin + squareLength * j;
-                    drawStone(g, gShadow, stoneX, stoneY, Lizzie.board.getStones()[Board.getIndex(i, j)]);
+                    drawStone(g, gShadow, stoneX, stoneY, Omega.board.getStones()[Board.getIndex(i, j)]);
                 }
             }
 
-            cachedZhash = Lizzie.board.getData().zobrist;
+            cachedZhash = Omega.board.getData().zobrist;
             g.dispose();
             gShadow.dispose();
         }
@@ -188,49 +182,22 @@ public class BoardRenderer {
     private void drawBranch() {
         branchStonesImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
         branchStonesShadowImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
-        branch=null;
 
-        if (Lizzie.frame.isPlayingAgainstLeelaz) {
+        if (Omega.frame.isPlayingAgainstLeelaz) {
             return;
         }
         // calculate best moves and branch
-        bestMoves = Lizzie.leelaz.getBestMoves();
-        branch = null;
-
+        bestMoves = Omega.leelaz.getBestMoves();
 
         Graphics2D g = (Graphics2D) branchStonesImage.getGraphics();
         Graphics2D gShadow = (Graphics2D) branchStonesShadowImage.getGraphics();
 
-        if (Lizzie.frame.mouseHoverCoordinate != null) {
+        if (Omega.frame.mouseHoverCoordinate != null) {
             for (int i = 0; i < bestMoves.size(); i++) {
                 MoveData move = bestMoves.get(i);
                 int[] coord = Board.convertNameToCoordinates(move.coordinate);
-
-                if (coord[0] == Lizzie.frame.mouseHoverCoordinate[0] && coord[1] == Lizzie.frame.mouseHoverCoordinate[1]) {
-                    branch = new Branch(Lizzie.board, move.variation);
-                    break;
-                }
             }
         }
-
-        if (branch == null)
-            return;
-
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        for (int i = 0; i < Board.BOARD_SIZE; i++) {
-            for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                int stoneX = scaledMargin + squareLength * i;
-                int stoneY = scaledMargin + squareLength * j;
-
-                // check if board is empty to prevent overwriting stones if there are under-the-stones situations
-                if (Lizzie.board.getStones()[Board.getIndex(i, j)] == Stone.EMPTY)
-                    drawStone(g, gShadow, stoneX, stoneY, branch.data.stones[Board.getIndex(i, j)].unGhosted());
-            }
-        }
-
-        g.dispose();
-        gShadow.dispose();
     }
 
     /**
@@ -250,49 +217,22 @@ public class BoardRenderer {
     private void drawMoveNumbers(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int[] lastMove = branch == null ? Lizzie.board.getLastMove() : branch.data.lastMove;
-        if (!Lizzie.config.showMoveNumber && branch == null){
-            if (lastMove != null) {
-                // mark the last coordinate
-                int lastMoveMarkerRadius = stoneRadius / 2;
-                int stoneX = x + scaledMargin + squareLength * lastMove[0];
-                int stoneY = y + scaledMargin + squareLength * lastMove[1];
+        int[] lastMove = Omega.board.getLastMove();
+        if (lastMove != null) {
+            // mark the last coordinate
+            int lastMoveMarkerRadius = stoneRadius / 2;
+            int stoneX = x + scaledMargin + squareLength * lastMove[0];
+            int stoneY = y + scaledMargin + squareLength * lastMove[1];
 
-                // set color to the opposite color of whatever is on the board
-                g.setColor(Lizzie.board.getStones()[Board.getIndex(lastMove[0], lastMove[1])].isWhite() ?
-                        Color.BLACK : Color.WHITE);
-                drawCircle(g, stoneX, stoneY, lastMoveMarkerRadius);
-            } else if (lastMove == null && Lizzie.board.getData().moveNumber != 0) {
-                g.setColor(Lizzie.board.getData().blackToPlay ? new Color(255, 255, 255,150) : new Color(0,0,0,150));
-                g.fillOval(x+boardLength/2-4*stoneRadius, y+boardLength/2 - 4*stoneRadius, stoneRadius*8, stoneRadius*8);
-                g.setColor(Lizzie.board.getData().blackToPlay ? new Color(0,0,0,255) : new Color(255, 255, 255,255));
-                drawString(g,x+boardLength/2, y+boardLength/2, "Open Sans", "pass", stoneRadius*4, stoneRadius*6);
-            }
-
-            return;
-        }
-
-        int[] moveNumberList = branch == null ? Lizzie.board.getMoveNumberList() : branch.data.moveNumberList;
-
-        for (int i = 0; i < Board.BOARD_SIZE; i++) {
-            for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                int stoneX = x + scaledMargin + squareLength * i;
-                int stoneY = y + scaledMargin + squareLength * j;
-
-                Stone stoneAtThisPoint = branch == null ? Lizzie.board.getStones()[Board.getIndex(i, j)] :
-                        branch.data.stones[Board.getIndex(i, j)];
-
-                // don't write the move number if either: the move number is 0, or there will already be playout information written
-                if (moveNumberList[Board.getIndex(i, j)] > 0 && !(branch != null && Lizzie.frame.mouseHoverCoordinate != null && i == Lizzie.frame.mouseHoverCoordinate[0] && j == Lizzie.frame.mouseHoverCoordinate[1])) {
-                    if (lastMove != null && i == lastMove[0] && j == lastMove[1])
-                        g.setColor(Color.RED.brighter());//stoneAtThisPoint.isBlack() ? Color.RED.brighter() : Color.BLUE.brighter());
-                    else
-                        g.setColor(stoneAtThisPoint.isBlack() ? Color.WHITE : Color.BLACK);
-
-                    String moveNumberString = moveNumberList[Board.getIndex(i, j)] + "";
-                    drawString(g, stoneX, stoneY, "Open Sans", moveNumberString, (float) (stoneRadius * 1.4), (int) (stoneRadius * 1.4));
-                }
-            }
+            // set color to the opposite color of whatever is on the board
+            g.setColor(Omega.board.getStones()[Board.getIndex(lastMove[0], lastMove[1])].isWhite() ?
+                    Color.BLACK : Color.WHITE);
+            drawCircle(g, stoneX, stoneY, lastMoveMarkerRadius);
+        } else if (lastMove == null && Omega.board.getData().moveNumber != 0) {
+            g.setColor(Omega.board.getData().blackToPlay ? new Color(255, 255, 255, 150) : new Color(0, 0, 0, 150));
+            g.fillOval(x + boardLength / 2 - 4 * stoneRadius, y + boardLength / 2 - 4 * stoneRadius, stoneRadius * 8, stoneRadius * 8);
+            g.setColor(Omega.board.getData().blackToPlay ? new Color(0, 0, 0, 255) : new Color(255, 255, 255, 255));
+            drawString(g, x + boardLength / 2, y + boardLength / 2, "Open Sans", "pass", stoneRadius * 4, stoneRadius * 6);
         }
     }
 
@@ -316,7 +256,7 @@ public class BoardRenderer {
 
             for (int i = 0; i < Board.BOARD_SIZE; i++) {
                 for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                    MoveData move=null;
+                    MoveData move = null;
 
                     // this is inefficient but it looks better with shadows
                     for (MoveData m : bestMoves) {
@@ -327,7 +267,7 @@ public class BoardRenderer {
                         }
                     }
 
-                    if (move==null)
+                    if (move == null)
                         continue;
 
                     boolean isBestMove = bestMoves.get(0) == move;
@@ -354,13 +294,10 @@ public class BoardRenderer {
                     Color hsbColor = Color.getHSBColor(hue, saturation, brightness);
                     Color color = new Color(hsbColor.getRed(), hsbColor.getBlue(), hsbColor.getGreen(), alpha);
 
-                    if (branch == null) {
-                        drawShadow(g, suggestionX, suggestionY, true, (float)alpha / 255);
+                        drawShadow(g, suggestionX, suggestionY, true, (float) alpha / 255);
                         g.setColor(color);
                         fillCircle(g, suggestionX, suggestionY, stoneRadius);
-                    }
 
-                    if (branch == null || (isBestMove && Lizzie.frame.mouseHoverCoordinate != null && coordinates[0] == Lizzie.frame.mouseHoverCoordinate[0] && coordinates[1] == Lizzie.frame.mouseHoverCoordinate[1])) {
                         // highlight LeelaZero's top recommended move
                         int strokeWidth = 1;
                         if (isBestMove) { // this is the best move
@@ -372,13 +309,12 @@ public class BoardRenderer {
                         }
                         drawCircle(g, suggestionX, suggestionY, stoneRadius - strokeWidth / 2);
                         g.setStroke(new BasicStroke(1));
-                    }
 
 
-                    if (branch == null && alpha >= MIN_ALPHA_TO_DISPLAY_TEXT || (Lizzie.frame.mouseHoverCoordinate != null && coordinates[0] == Lizzie.frame.mouseHoverCoordinate[0] && coordinates[1] == Lizzie.frame.mouseHoverCoordinate[1])) {
+                    if (alpha >= MIN_ALPHA_TO_DISPLAY_TEXT || (Omega.frame.mouseHoverCoordinate != null && coordinates[0] == Omega.frame.mouseHoverCoordinate[0] && coordinates[1] == Omega.frame.mouseHoverCoordinate[1])) {
                         double roundedWinrate = Math.round(move.winrate * 10) / 10.0;
                         g.setColor(Color.BLACK);
-                        if (branch != null && Lizzie.board.getData().blackToPlay)
+                        if (Omega.board.getData().blackToPlay)
                             g.setColor(Color.WHITE);
 
                         drawString(g, suggestionX, suggestionY, "Open Sans Semibold", Font.PLAIN, String.format("%.1f", roundedWinrate), stoneRadius, stoneRadius * 1.5, 1);
@@ -390,7 +326,6 @@ public class BoardRenderer {
     }
 
     private void drawWoodenBoard(Graphics2D g) {
-        if (uiConfig.getBoolean("fancy-board")) {
             // fancy version
             try {
                 int shadowRadius = (int) (boardLength * MARGIN / 6);
@@ -403,14 +338,6 @@ public class BoardRenderer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-        } else {
-            // simple version
-            JSONArray boardColor = uiConfig.getJSONArray("board-color");
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-            g.setColor(new Color(boardColor.getInt(0), boardColor.getInt(1), boardColor.getInt(2)));
-            g.fillRect(x, y, boardLength, boardLength);
-        }
     }
 
     /**
@@ -443,12 +370,10 @@ public class BoardRenderer {
         drawShadow(g, centerX, centerY, isGhost, 1);
     }
 
+    private static final int SHADOW_SIZE = 60; // TODO remove hardcoded value
     private void drawShadow(Graphics2D g, int centerX, int centerY, boolean isGhost, float shadowStrength) {
-        if (!uiConfig.getBoolean("shadows-enabled"))
-            return;
-
-        final int shadowSize = (int) (stoneRadius * 0.3 * uiConfig.getInt("shadow-size") / 100);
-        final int fartherShadowSize = (int) (stoneRadius * 0.17* uiConfig.getInt("shadow-size") / 100);
+        final int shadowSize = (int) (stoneRadius * 0.3 * SHADOW_SIZE / 100);
+        final int fartherShadowSize = (int) (stoneRadius * 0.17 * SHADOW_SIZE / 100);
 
 
         final Paint TOP_GRADIENT_PAINT;
@@ -456,8 +381,8 @@ public class BoardRenderer {
 
         if (isGhost) {
             TOP_GRADIENT_PAINT = new RadialGradientPaint(new Point2D.Float(centerX, centerY),
-                    stoneRadius + shadowSize, new float[]{((float)stoneRadius / (stoneRadius+shadowSize))-0.0001f, ((float)stoneRadius / (stoneRadius+shadowSize)), 1.0f}, new Color[]{
-                    new Color(0, 0, 0, 0), new Color(50, 50, 50, (int)(120 * shadowStrength)), new Color(0, 0, 0, 0)
+                    stoneRadius + shadowSize, new float[]{((float) stoneRadius / (stoneRadius + shadowSize)) - 0.0001f, ((float) stoneRadius / (stoneRadius + shadowSize)), 1.0f}, new Color[]{
+                    new Color(0, 0, 0, 0), new Color(50, 50, 50, (int) (120 * shadowStrength)), new Color(0, 0, 0, 0)
             });
 
             LOWER_RIGHT_GRADIENT_PAINT = new RadialGradientPaint(new Point2D.Float(centerX + shadowSize * 2 / 3, centerY + shadowSize * 2 / 3),
@@ -503,67 +428,39 @@ public class BoardRenderer {
 
         switch (color) {
             case BLACK:
-                if (uiConfig.getBoolean("fancy-stones")) {
                     drawShadow(gShadow, centerX, centerY, false);
                     try {
                         g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    drawShadow(gShadow, centerX, centerY, true);
-                    g.setColor(Color.BLACK);
-                    fillCircle(g, centerX, centerY, stoneRadius);
-                }
                 break;
 
             case WHITE:
-                if (uiConfig.getBoolean("fancy-stones")) {
                     drawShadow(gShadow, centerX, centerY, false);
                     try {
                         g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    drawShadow(gShadow, centerX, centerY, true);
-                    g.setColor(Color.WHITE);
-                    fillCircle(g, centerX, centerY, stoneRadius);
-                    g.setColor(Color.BLACK);
-                    drawCircle(g, centerX, centerY, stoneRadius);
-                }
                 break;
 
             case BLACK_GHOST:
-                if (uiConfig.getBoolean("fancy-stones")) {
                     drawShadow(gShadow, centerX, centerY, true);
                     try {
                         g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    drawShadow(gShadow, centerX, centerY, true);
-                    g.setColor(new Color(0, 0, 0));//, uiConfig.getInt("branch-stone-alpha")));
-                    fillCircle(g, centerX, centerY, stoneRadius);
-                }
                 break;
 
             case WHITE_GHOST:
-                if (uiConfig.getBoolean("fancy-stones")) {
                     drawShadow(gShadow, centerX, centerY, true);
                     try {
                         g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    drawShadow(gShadow, centerX, centerY, true);
-                    g.setColor(new Color(255, 255, 255));//, uiConfig.getInt("branch-stone-alpha")));
-                    fillCircle(g, centerX, centerY, stoneRadius);
-                    g.setColor(new Color(0, 0, 0));//, uiConfig.getInt("branch-stone-alpha")));
-                    drawCircle(g, centerX, centerY, stoneRadius);
-                }
                 break;
 
             default:
@@ -583,6 +480,7 @@ public class BoardRenderer {
     private void drawCircle(Graphics2D g, int centerX, int centerY, int radius) {
         g.drawOval(centerX - radius, centerY - radius, 2 * radius + 1, 2 * radius + 1);
     }
+
     /**
      * Draws a string centered at (x, y) of font $fontString$, whose contents are $string$.
      * The maximum/default fontsize will be $maximumFontHeight$, and the length of the drawn string will be at most maximumFontWidth.
@@ -665,7 +563,6 @@ public class BoardRenderer {
      *
      * @param x x coordinate
      * @param y y coordinate
-     *
      */
     public void setLocation(int x, int y) {
         this.x = x;

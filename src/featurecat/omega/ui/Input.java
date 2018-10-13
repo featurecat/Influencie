@@ -1,6 +1,6 @@
 package featurecat.omega.ui;
 
-import wagner.stephanie.lizzie.Lizzie;
+import featurecat.omega.Omega;
 
 import java.awt.event.*;
 
@@ -20,7 +20,7 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         int y = e.getY();
 
         if (e.getButton() == MouseEvent.BUTTON1) // left mouse click
-            Lizzie.frame.onClicked(x, y);
+            Omega.frame.onClicked(x, y);
         else if (e.getButton() == MouseEvent.BUTTON3) // right mouse click
             undo();
     }
@@ -50,7 +50,7 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         int x = e.getX();
         int y = e.getY();
 
-        Lizzie.frame.onMouseMoved(x, y);
+        Omega.frame.onMouseMoved(x, y);
     }
 
     @Override
@@ -59,27 +59,27 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
     }
 
     private void undo() {
-        if (Lizzie.frame.isPlayingAgainstLeelaz) {
-            Lizzie.frame.isPlayingAgainstLeelaz = false;
+        if (Omega.frame.isPlayingAgainstLeelaz) {
+            Omega.frame.isPlayingAgainstLeelaz = false;
         }
         int movesToAdvance = 1;
         if (controlIsPressed)
             movesToAdvance = 10;
 
         for (int i = 0; i < movesToAdvance; i++)
-            Lizzie.board.previousMove();
+            Omega.board.previousMove();
     }
 
     private void redo() {
-        if (Lizzie.frame.isPlayingAgainstLeelaz) {
-            Lizzie.frame.isPlayingAgainstLeelaz = false;
+        if (Omega.frame.isPlayingAgainstLeelaz) {
+            Omega.frame.isPlayingAgainstLeelaz = false;
         }
         int movesToAdvance = 1;
         if (controlIsPressed)
             movesToAdvance = 10;
 
         for (int i = 0; i < movesToAdvance; i++)
-            Lizzie.board.nextMove();
+            Omega.board.nextMove();
     }
 
     @Override
@@ -101,74 +101,40 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
                 break;
 
             case VK_SPACE:
-                if (Lizzie.frame.isPlayingAgainstLeelaz) {
-                    Lizzie.frame.isPlayingAgainstLeelaz = false;
-                    Lizzie.leelaz.togglePonder(); // we must toggle twice for it to restart pondering
+                if (Omega.frame.isPlayingAgainstLeelaz) {
+                    Omega.frame.isPlayingAgainstLeelaz = false;
+                    Omega.leelaz.togglePonder(); // we must toggle twice for it to restart pondering
                 }
-                Lizzie.leelaz.togglePonder();
+                Omega.leelaz.togglePonder();
                 break;
 
             case VK_P:
-                Lizzie.board.pass();
-                break;
-
-            case VK_M:
-                Lizzie.config.toggleShowMoveNumber();
-                break;
-
-            case VK_S:
-                // stop the ponder
-                if (Lizzie.leelaz.isPondering())
-                    Lizzie.leelaz.togglePonder();
-                Lizzie.frame.saveSgf();
+                Omega.board.pass();
                 break;
 
             case VK_O:
-                if (Lizzie.leelaz.isPondering())
-                    Lizzie.leelaz.togglePonder();
-                Lizzie.frame.openSgf();
+                if (Omega.leelaz.isPondering())
+                    Omega.leelaz.togglePonder();
+                Omega.frame.openSgf();
                 break;
 
             case VK_HOME:
-                while (Lizzie.board.previousMove()) ;
+                while (Omega.board.previousMove()) ;
                 break;
 
             case VK_END:
-                while (Lizzie.board.nextMove()) ;
-                break;
-
-            case VK_X:
-                if (!Lizzie.frame.showControls) {
-                    if (Lizzie.leelaz.isPondering()) {
-                        wasPonderingWhenControlsShown = true;
-                        Lizzie.leelaz.togglePonder();
-                    } else {
-                        wasPonderingWhenControlsShown = false;
-                    }
-                    Lizzie.frame.drawControls();
-                }
-                Lizzie.frame.showControls = true;
-                Lizzie.frame.repaint();
+                while (Omega.board.nextMove()) ;
                 break;
 
             case VK_C:
-                Lizzie.frame.toggleCoordinates();
+                Omega.frame.toggleCoordinates();
                 break;
-
-            case VK_ENTER:
-                if (!Lizzie.leelaz.isThinking) {
-                    Lizzie.leelaz.sendCommand("time_settings 0 " + Lizzie.config.config.getJSONObject("leelaz").getInt("max-game-thinking-time-seconds") + " 1");
-                    Lizzie.frame.playerIsBlack = !Lizzie.board.getData().blackToPlay;
-                    Lizzie.frame.isPlayingAgainstLeelaz = true;
-                    Lizzie.leelaz.sendCommand("genmove " + (Lizzie.board.getData().blackToPlay ? "B" : "W"));
-                }
-                break;
-
             default:
         }
     }
 
     private boolean wasPonderingWhenControlsShown = false;
+
     @Override
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
@@ -178,9 +144,9 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
 
             case VK_X:
                 if (wasPonderingWhenControlsShown)
-                    Lizzie.leelaz.togglePonder();
-                Lizzie.frame.showControls = false;
-                Lizzie.frame.repaint();
+                    Omega.leelaz.togglePonder();
+                Omega.frame.showControls = false;
+                Omega.frame.repaint();
                 break;
 
             default:
