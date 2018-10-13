@@ -60,12 +60,13 @@ public class Leelaz {
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.directory(new File("."));
         processBuilder.redirectErrorStream(true);
-        process = processBuilder.start();
+        // TODO reinitiailze
+//        process = processBuilder.start();
 
-        initializeStreams();
+//        initializeStreams();
 
         // start a thread to continuously read Leelaz output
-        new Thread(this::read).start();
+//        new Thread(this::read).start();
     }
 
     /**
@@ -149,15 +150,16 @@ public class Leelaz {
      * @param command a GTP command containing no newline characters
      */
     public void sendCommand(String command) {
-        System.out.println(command);
-        if (command.startsWith("genmove"))
-            isThinking = true;
-        try {
-            outputStream.write((command + "\n").getBytes());
-            outputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return; // TODO remove
+//        System.out.println(command);
+//        if (command.startsWith("genmove"))
+//            isThinking = true;
+//        try {
+//            outputStream.write((command + "\n").getBytes());
+//            outputStream.flush();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     /**
