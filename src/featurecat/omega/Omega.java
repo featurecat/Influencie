@@ -15,6 +15,8 @@ public class Omega {
     public static Board board;
     public static String version = "0.1";
 
+    public static final String NETWORK_STRING = "network.gz"; // todo fix hardcoded values
+
     /**
      * Launches the game window, and runs the game.
      */

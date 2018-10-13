@@ -1,10 +1,10 @@
-package featurecat.lizzie.rules;
+package featurecat.omega.analysis;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import featurecat.lizzie.analysis.GameInfo;
-import featurecat.lizzie.plugin.PluginManager;
+import featurecat.omega.Omega;
+import featurecat.omega.rules.Stone;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -14,7 +14,7 @@ public class SGFParser {
 
     public static boolean load(String filename) throws IOException {
         // Clear the board
-        Lizzie.board.clear();
+        Omega.board.clear();
 
         File file = new File(filename);
         if (!file.exists() || !file.canRead()) {
@@ -35,13 +35,12 @@ public class SGFParser {
         }
 
         boolean returnValue = parse(value);
-        PluginManager.onSgfLoaded();
         return returnValue;
     }
 
     public static boolean loadFromString(String sgfString) {
         // Clear the board
-        Lizzie.board.clear();
+        Omega.board.clear();
 
         return parse(sgfString);
     }
@@ -131,39 +130,39 @@ public class SGFParser {
                     if (tag.equals("B")) {
                         int[] move = convertSgfPosToCoord(tagContent);
                         if (move == null) {
-                            Lizzie.board.pass(Stone.BLACK);
+                            Omega.board.pass(Stone.BLACK);
                         } else {
-                            Lizzie.board.place(move[0], move[1], Stone.BLACK);
+                            Omega.board.place(move[0], move[1], Stone.BLACK);
                         }
                     } else if (tag.equals("W")) {
                         int[] move = convertSgfPosToCoord(tagContent);
                         if (move == null) {
-                            Lizzie.board.pass(Stone.WHITE);
+                            Omega.board.pass(Stone.WHITE);
                         } else {
-                            Lizzie.board.place(move[0], move[1], Stone.WHITE);
+                            Omega.board.place(move[0], move[1], Stone.WHITE);
                         }
                     } else if (tag.equals("AB")) {
                         int[] move = convertSgfPosToCoord(tagContent);
                         if (move == null) {
-                            Lizzie.board.pass(Stone.BLACK);
+                            Omega.board.pass(Stone.BLACK);
                         } else {
-                            Lizzie.board.place(move[0], move[1], Stone.BLACK);
+                            Omega.board.place(move[0], move[1], Stone.BLACK);
                         }
-                        Lizzie.board.flatten();
+                        Omega.board.flatten();
                     } else if (tag.equals("AW")) {
                         int[] move = convertSgfPosToCoord(tagContent);
                         if (move == null) {
-                            Lizzie.board.pass(Stone.WHITE);
+                            Omega.board.pass(Stone.WHITE);
                         } else {
-                            Lizzie.board.place(move[0], move[1], Stone.WHITE);
+                            Omega.board.place(move[0], move[1], Stone.WHITE);
                         }
-                        Lizzie.board.flatten();
+                        Omega.board.flatten();
                     } else if (tag.equals("PB")) {
                         blackPlayer = tagContent;
                     } else if (tag.equals("PW")) {
                         whitePlayer = tagContent;
                     }  else if (tag.equals("KM")) {
-                        Lizzie.board.getHistory().getGameInfo().setKomi(Double.parseDouble(tagContent));
+                        Omega.board.getHistory().getGameInfo().setKomi(Double.parseDouble(tagContent));
                     }
                     break;
                 case ';':
@@ -186,121 +185,9 @@ public class SGFParser {
             }
         }
 
-        Lizzie.frame.setPlayers(whitePlayer, blackPlayer);
-
         // Rewind to game start
-        while (Lizzie.board.previousMove()) ;
+        while (Omega.board.previousMove()) ;
 
         return true;
-    }
-
-    public static String saveToString() throws IOException {
-        try (StringWriter writer = new StringWriter()) {
-            saveToStream(Lizzie.board, writer);
-            return writer.toString();
-        }
-    }
-
-    public static void save(Board board, String filename) throws IOException {
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(filename))) {
-            saveToStream(board, writer);
-        }
-    }
-
-    private static void saveToStream(Board board, Writer writer) throws IOException {
-        // collect game info
-        BoardHistoryList history = board.getHistory();
-        GameInfo gameInfo = history.getGameInfo();
-        String playerBlack = gameInfo.getPlayerBlack();
-        String playerWhite = gameInfo.getPlayerWhite();
-        Double komi = gameInfo.getKomi();
-        Integer handicap = gameInfo.getHandicap();
-        String date = SGF_DATE_FORMAT.format(gameInfo.getDate());
-
-        // add SGF header
-        StringBuilder builder = new StringBuilder("(;");
-        if (handicap != 0) builder.append(String.format("HA[%s]", handicap));
-        builder.append(String.format("KM[%s]PW[%s]PB[%s]DT[%s]AP[Lizzie: %s]",
-                komi, playerWhite, playerBlack, date, Lizzie.lizzieVersion));
-
-        // move to the first move
-        history.toStart();
-
-        // add handicap stones to SGF
-        if (handicap != 0) {
-            builder.append("AB");
-            Stone[] stones = history.getStones();
-            for (int i = 0; i < stones.length; i++) {
-                Stone stone = stones[i];
-                if (stone.isBlack()) {
-                    // i = x * Board.BOARD_SIZE + y;
-                    int corY = i % Board.BOARD_SIZE;
-                    int corX = (i - corY) / Board.BOARD_SIZE;
-
-                    char x = (char) (corX + 'a');
-                    char y = (char) (corY + 'a');
-                    builder.append(String.format("[%c%c]", x, y));
-                }
-            }
-        }
-
-        // replay moves, and convert them to tags.
-        // *  format: ";B[xy]" or ";W[xy]"
-        // *  with 'xy' = coordinates ; or 'tt' for pass.
-        BoardData data;
-
-        // TODO: this code comes from cngoodboy's plugin PR #65. It looks like it might be useful for handling
-        //       AB/AW commands for sgfs in general -- we can extend it beyond just handicap. TODO integrate it
-//        data = history.getData();
-//
-//        // For handicap
-//        ArrayList<int[]> abList = new ArrayList<int[]>();
-//        ArrayList<int[]> awList = new ArrayList<int[]>();
-//
-//        for (int i = 0; i < Board.BOARD_SIZE; i++) {
-//            for (int j = 0; j < Board.BOARD_SIZE; j++) {
-//                switch (data.stones[Board.getIndex(i, j)]) {
-//                    case BLACK:
-//                        abList.add(new int[]{i, j});
-//                        break;
-//                    case WHITE:
-//                        awList.add(new int[]{i, j});
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
-//
-//        if (!abList.isEmpty()) {
-//            builder.append(";AB");
-//            for (int i = 0; i < abList.size(); i++) {
-//                builder.append(String.format("[%s]", convertCoordToSgfPos(abList.get(i))));
-//            }
-//        }
-//
-//        if (!awList.isEmpty()) {
-//            builder.append(";AW");
-//            for (int i = 0; i < awList.size(); i++) {
-//                builder.append(String.format("[%s]", convertCoordToSgfPos(awList.get(i))));
-//            }
-//        }
-
-        while ((data = history.next()) != null) {
-
-            String stone;
-            if (Stone.BLACK.equals(data.lastMoveColor)) stone = "B";
-            else if (Stone.WHITE.equals(data.lastMoveColor)) stone = "W";
-            else continue;
-
-            char x = data.lastMove == null ? 't' : (char) (data.lastMove[0] + 'a');
-            char y = data.lastMove == null ? 't' : (char) (data.lastMove[1] + 'a');
-
-            builder.append(String.format(";%s[%c%c]", stone, x, y));
-        }
-
-        // close file
-        builder.append(')');
-        writer.append(builder.toString());
     }
 }
