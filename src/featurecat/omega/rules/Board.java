@@ -1,6 +1,6 @@
 package featurecat.omega.rules;
 
-import wagner.stephanie.lizzie.Lizzie;
+import featurecat.omega.Omega;
 
 public class Board {
     public static final int BOARD_SIZE = 19;
@@ -80,9 +80,9 @@ public class Board {
             if (next != null && next.lastMove == null) {
                 // this is the next move in history. Just increment history so that we don't erase the redo's
                 history.next();
-                Lizzie.leelaz.playMove(color, "pass");
-                if (Lizzie.frame.isPlayingAgainstLeelaz)
-                    Lizzie.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "B" : "W"));
+                Omega.leelaz.playMove(color, "pass");
+                if (Omega.frame.isPlayingAgainstLeelaz)
+                    Omega.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "B" : "W"));
 
                 return;
             }
@@ -96,14 +96,14 @@ public class Board {
             BoardData newState = new BoardData(stones, null, color, !history.isBlacksTurn(), zobrist, moveNumber, moveNumberList);
 
             // update leelaz with pass
-            Lizzie.leelaz.playMove(color, "pass");
-            if (Lizzie.frame.isPlayingAgainstLeelaz)
-                Lizzie.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "W" : "B"));
+            Omega.leelaz.playMove(color, "pass");
+            if (Omega.frame.isPlayingAgainstLeelaz)
+                Omega.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "W" : "B"));
 
             // update history with pass
             history.add(newState);
 
-            Lizzie.frame.repaint();
+            Omega.frame.repaint();
         }
     }
 
@@ -132,11 +132,11 @@ public class Board {
                 // this is the next coordinate in history. Just increment history so that we don't erase the redo's
                 history.next();
                 // should be opposite from the bottom case
-                if (Lizzie.frame.isPlayingAgainstLeelaz && Lizzie.frame.playerIsBlack != getData().blackToPlay) {
-                    Lizzie.leelaz.playMove(color, convertCoordinatesToName(x, y));
-                    Lizzie.leelaz.sendCommand("genmove " + (Lizzie.board.getData().blackToPlay ? "W" : "B"));
-                } else if (!Lizzie.frame.isPlayingAgainstLeelaz) {
-                    Lizzie.leelaz.playMove(color, convertCoordinatesToName(x, y));
+                if (Omega.frame.isPlayingAgainstLeelaz && Omega.frame.playerIsBlack != getData().blackToPlay) {
+                    Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
+                    Omega.leelaz.sendCommand("genmove " + (Omega.board.getData().blackToPlay ? "W" : "B"));
+                } else if (!Omega.frame.isPlayingAgainstLeelaz) {
+                    Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
                 }
                 return;
             }
@@ -177,17 +177,17 @@ public class Board {
                 return;
 
             // update leelaz with board position
-            if (Lizzie.frame.isPlayingAgainstLeelaz && Lizzie.frame.playerIsBlack == getData().blackToPlay) {
-                Lizzie.leelaz.playMove(color, convertCoordinatesToName(x, y));
-                Lizzie.leelaz.sendCommand("genmove " + (Lizzie.board.getData().blackToPlay ? "W" : "B"));
-            } else if (!Lizzie.frame.isPlayingAgainstLeelaz) {
-                Lizzie.leelaz.playMove(color, convertCoordinatesToName(x, y));
+            if (Omega.frame.isPlayingAgainstLeelaz && Omega.frame.playerIsBlack == getData().blackToPlay) {
+                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
+                Omega.leelaz.sendCommand("genmove " + (Omega.board.getData().blackToPlay ? "W" : "B"));
+            } else if (!Omega.frame.isPlayingAgainstLeelaz) {
+                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
             }
 
             // update history with this coordinate
             history.add(newState);
 
-            Lizzie.frame.repaint();
+            Omega.frame.repaint();
         }
     }
 
@@ -330,11 +330,11 @@ public class Board {
             if (history.next() != null) {
                 // update leelaz board position, before updating to next node
                 if (history.getData().lastMove == null) {
-                    Lizzie.leelaz.playMove(history.getLastMoveColor(), "pass");
+                    Omega.leelaz.playMove(history.getLastMoveColor(), "pass");
                 } else {
-                    Lizzie.leelaz.playMove(history.getLastMoveColor(), convertCoordinatesToName(history.getLastMove()[0], history.getLastMove()[1]));
+                    Omega.leelaz.playMove(history.getLastMoveColor(), convertCoordinatesToName(history.getLastMove()[0], history.getLastMove()[1]));
                 }
-                Lizzie.frame.repaint();
+                Omega.frame.repaint();
                 return true;
             }
             return false;
@@ -355,8 +355,8 @@ public class Board {
     public boolean previousMove() {
         synchronized (this) {
             if (history.previous() != null) {
-                Lizzie.leelaz.undo();
-                Lizzie.frame.repaint();
+                Omega.leelaz.undo();
+                Omega.frame.repaint();
                 return true;
             }
             return false;
