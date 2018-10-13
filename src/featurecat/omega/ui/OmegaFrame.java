@@ -126,6 +126,7 @@ public class OmegaFrame extends JFrame {
             // initialize
             cachedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
             int topInset = this.getInsets().top;
 
@@ -154,6 +155,7 @@ public class OmegaFrame extends JFrame {
 
         // draw the image
         Graphics2D bsGraphics = (Graphics2D) bs.getDrawGraphics();
+        bsGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         bsGraphics.drawImage(cachedImage, 0, 0, null);
 
         // cleanup

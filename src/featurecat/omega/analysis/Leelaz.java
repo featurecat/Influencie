@@ -219,7 +219,7 @@ public class Leelaz {
      * End the process
      */
     public void shutdown() {
-        process.destroy();
+        //process.destroy(); // TODO enable
     }
 
     public List<MoveData> getBestMoves() {

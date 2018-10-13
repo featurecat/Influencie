@@ -94,6 +94,7 @@ public class BoardRenderer {
             cachedBackgroundImage = new BufferedImage(Omega.frame.getWidth(), Omega.frame.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = cachedBackgroundImage.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
             // draw the wooden background
             drawWoodenBoard(g);
@@ -140,7 +141,7 @@ public class BoardRenderer {
             g.dispose();
         }
 
-        g0.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        //g0.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g0.drawImage(cachedBackgroundImage, 0, 0, null);
     }
 
@@ -156,7 +157,9 @@ public class BoardRenderer {
             cachedStonesImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
             cachedStonesShadowImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = cachedStonesImage.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             Graphics2D gShadow = cachedStonesShadowImage.createGraphics();
+            gShadow.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
             // we need antialiasing to make the stones pretty. Java is a bit slow at antialiasing; that's why we want the cache
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -190,7 +193,9 @@ public class BoardRenderer {
         bestMoves = Omega.leelaz.getBestMoves();
 
         Graphics2D g = (Graphics2D) branchStonesImage.getGraphics();
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         Graphics2D gShadow = (Graphics2D) branchStonesShadowImage.getGraphics();
+        gShadow.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         if (Omega.frame.mouseHoverCoordinate != null) {
             for (int i = 0; i < bestMoves.size(); i++) {
@@ -204,7 +209,7 @@ public class BoardRenderer {
      * render the shadows and stones in correct background-foreground order
      */
     private void renderImages(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        //g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.drawImage(cachedStonesShadowImage, x, y, null);
         g.drawImage(branchStonesShadowImage, x, y, null);
         g.drawImage(cachedStonesImage, x, y, null);
@@ -347,9 +352,6 @@ public class BoardRenderer {
      * @return an array containing the three outputs: new boardLength, scaledMargin, availableLength
      */
     private static int[] calculatePixelMargins(int boardLength) {
-        if (boardLength < Board.BOARD_SIZE - 1)
-            throw new IllegalArgumentException("boardLength may not be less than " + (Board.BOARD_SIZE - 1) + ", but was " + boardLength);
-
         int scaledMargin;
         int availableLength;
 
@@ -370,7 +372,7 @@ public class BoardRenderer {
         drawShadow(g, centerX, centerY, isGhost, 1);
     }
 
-    private static final int SHADOW_SIZE = 60; // TODO remove hardcoded value
+    private static final int SHADOW_SIZE = 100; // TODO remove hardcoded value
     private void drawShadow(Graphics2D g, int centerX, int centerY, boolean isGhost, float shadowStrength) {
         final int shadowSize = (int) (stoneRadius * 0.3 * SHADOW_SIZE / 100);
         final int fartherShadowSize = (int) (stoneRadius * 0.17 * SHADOW_SIZE / 100);
