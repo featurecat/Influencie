@@ -109,9 +109,6 @@ public class Leelaz {
 
                     line = line.trim();
                     if (Omega.frame != null && line.startsWith("=")&&line.length() > 2 && isThinking) {
-                        if (Omega.frame.isPlayingAgainstLeelaz) {
-                            Omega.board.place(line.substring(2));
-                        }
                         isThinking=false;
                     }
                 }
@@ -183,8 +180,6 @@ public class Leelaz {
             sendCommand("play " + colorString + " " + move);
             bestMoves = new ArrayList<>();
 
-            if (isPondering && !Omega.frame.isPlayingAgainstLeelaz)
-                ponder();
         }
     }
 

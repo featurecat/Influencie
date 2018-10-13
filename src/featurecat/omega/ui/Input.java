@@ -59,9 +59,6 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
     }
 
     private void undo() {
-        if (Omega.frame.isPlayingAgainstLeelaz) {
-            Omega.frame.isPlayingAgainstLeelaz = false;
-        }
         int movesToAdvance = 1;
         if (controlIsPressed)
             movesToAdvance = 10;
@@ -71,9 +68,6 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
     }
 
     private void redo() {
-        if (Omega.frame.isPlayingAgainstLeelaz) {
-            Omega.frame.isPlayingAgainstLeelaz = false;
-        }
         int movesToAdvance = 1;
         if (controlIsPressed)
             movesToAdvance = 10;
@@ -84,11 +78,8 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
 
     @Override
     public void keyPressed(KeyEvent e) {
-
-        int movesToAdvance = 1; // number of moves to advance if control is held down
         switch (e.getKeyCode()) {
             case VK_CONTROL:
-
                 controlIsPressed = true;
                 break;
 
@@ -98,18 +89,6 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
 
             case VK_LEFT:
                 undo();
-                break;
-
-            case VK_SPACE:
-                if (Omega.frame.isPlayingAgainstLeelaz) {
-                    Omega.frame.isPlayingAgainstLeelaz = false;
-                    Omega.leelaz.togglePonder(); // we must toggle twice for it to restart pondering
-                }
-                Omega.leelaz.togglePonder();
-                break;
-
-            case VK_P:
-                Omega.board.pass();
                 break;
 
             case VK_O:
@@ -125,28 +104,15 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
             case VK_END:
                 while (Omega.board.nextMove()) ;
                 break;
-
-            case VK_C:
-                Omega.frame.toggleCoordinates();
-                break;
             default:
         }
     }
-
-    private boolean wasPonderingWhenControlsShown = false;
 
     @Override
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
             case VK_CONTROL:
                 controlIsPressed = false;
-                break;
-
-            case VK_X:
-                if (wasPonderingWhenControlsShown)
-                    Omega.leelaz.togglePonder();
-                Omega.frame.showControls = false;
-                Omega.frame.repaint();
                 break;
 
             default:

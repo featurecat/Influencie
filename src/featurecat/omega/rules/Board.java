@@ -146,9 +146,6 @@ public class Board {
                 // this is the next move in history. Just increment history so that we don't erase the redo's
                 history.next();
                 Omega.leelaz.playMove(color, "pass");
-                if (Omega.frame.isPlayingAgainstLeelaz)
-                    Omega.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "B" : "W"));
-
                 return;
             }
 
@@ -162,8 +159,6 @@ public class Board {
 
             // update leelaz with pass
             Omega.leelaz.playMove(color, "pass");
-            if (Omega.frame.isPlayingAgainstLeelaz)
-                Omega.leelaz.sendCommand("genmove " + (history.isBlacksTurn()? "W" : "B"));
 
             // update history with pass
             history.add(newState);
@@ -197,12 +192,7 @@ public class Board {
                 // this is the next coordinate in history. Just increment history so that we don't erase the redo's
                 history.next();
                 // should be opposite from the bottom case
-                if (Omega.frame.isPlayingAgainstLeelaz && Omega.frame.playerIsBlack != getData().blackToPlay) {
-                    Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
-                    Omega.leelaz.sendCommand("genmove " + (Omega.board.getData().blackToPlay ? "W" : "B"));
-                } else if (!Omega.frame.isPlayingAgainstLeelaz) {
-                    Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
-                }
+                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
                 return;
             }
 
@@ -241,13 +231,7 @@ public class Board {
             if (isSuicidal || history.violatesSuperko(newState))
                 return;
 
-            // update leelaz with board position
-            if (Omega.frame.isPlayingAgainstLeelaz && Omega.frame.playerIsBlack == getData().blackToPlay) {
-                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
-                Omega.leelaz.sendCommand("genmove " + (Omega.board.getData().blackToPlay ? "W" : "B"));
-            } else if (!Omega.frame.isPlayingAgainstLeelaz) {
-                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
-            }
+            Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
 
             // update history with this coordinate
             history.add(newState);

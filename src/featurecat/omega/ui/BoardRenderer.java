@@ -3,10 +3,8 @@ package featurecat.omega.ui;
 import featurecat.omega.analysis.MoveData;
 import featurecat.omega.rules.Zobrist;
 import featurecat.omega.Omega;
-import featurecat.omega.analysis.MoveData;
 import featurecat.omega.rules.Board;
 import featurecat.omega.rules.Stone;
-import featurecat.omega.rules.Zobrist;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -27,10 +25,9 @@ public class BoardRenderer {
     private int boardLength;
 
     private int scaledMargin, availableLength, squareLength, stoneRadius;
-    private List<MoveData> bestMoves;
+    private List<MoveData> heatmap; // TODO this isnt getting set
 
     private BufferedImage cachedBackgroundImage = null;
-    private boolean cachedBackgroundImageHasCoordinatesEnabled = false;
 
     private BufferedImage cachedStonesImage = null;
     private BufferedImage cachedStonesShadowImage = null;
@@ -49,24 +46,14 @@ public class BoardRenderer {
 
         setupSizeParameters();
 
-//        Stopwatch timer = new Stopwatch();
         drawBackground(g);
-//        timer.lap("background");
         drawStones();
-//        timer.lap("stones");
-        drawBranch();
-//        timer.lap("branch");
 
         renderImages(g);
-//        timer.lap("rendering images");
 
         drawMoveNumbers(g);
-//        timer.lap("movenumbers");
-        if (!Omega.frame.isPlayingAgainstLeelaz)
-            drawLeelazSuggestions(g);
-//        timer.lap("leelaz");
+        drawHeatmap(g);
 
-//        timer.print();
     }
 
     /**
@@ -88,8 +75,7 @@ public class BoardRenderer {
     private void drawBackground(Graphics2D g0) {
         // draw the cached background image if frame size changes
         if (cachedBackgroundImage == null || cachedBackgroundImage.getWidth() != Omega.frame.getWidth() ||
-                cachedBackgroundImage.getHeight() != Omega.frame.getHeight() ||
-                cachedBackgroundImageHasCoordinatesEnabled != Omega.frame.showCoordinates) {
+                cachedBackgroundImage.getHeight() != Omega.frame.getHeight()) {
 
             cachedBackgroundImage = new BufferedImage(Omega.frame.getWidth(), Omega.frame.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
@@ -124,20 +110,6 @@ public class BoardRenderer {
                 }
             }
 
-            // draw coordinates if enabled
-            if (Omega.frame.showCoordinates) {
-                g.setColor(Color.BLACK);
-                String alphabet = "ABCDEFGHJKLMNOPQRST";
-                for (int i = 0; i < Board.BOARD_SIZE; i++) {
-                    drawString(g, x + scaledMargin + squareLength * i, y + scaledMargin / 2, "Open Sans", "" + alphabet.charAt(i), stoneRadius * 4 / 5, stoneRadius);
-                    drawString(g, x + scaledMargin + squareLength * i, y - scaledMargin / 2 + boardLength, "Open Sans", "" + alphabet.charAt(i), stoneRadius * 4 / 5, stoneRadius);
-                }
-                for (int i = 0; i < Board.BOARD_SIZE; i++) {
-                    drawString(g, x + scaledMargin / 2, y + scaledMargin + squareLength * i, "Open Sans", "" + (i + 1), stoneRadius * 4 / 5, stoneRadius);
-                    drawString(g, x - scaledMargin / 2 + +boardLength, y + scaledMargin + squareLength * i, "Open Sans", "" + (i + 1), stoneRadius * 4 / 5, stoneRadius);
-                }
-            }
-            cachedBackgroundImageHasCoordinatesEnabled = Omega.frame.showCoordinates;
             g.dispose();
         }
 
@@ -180,32 +152,6 @@ public class BoardRenderer {
     }
 
     /**
-     * Draw the 'ghost stones' which show a variation Leelaz is thinking about
-     */
-    private void drawBranch() {
-        branchStonesImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
-        branchStonesShadowImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
-
-        if (Omega.frame.isPlayingAgainstLeelaz) {
-            return;
-        }
-        // calculate best moves and branch
-        bestMoves = Omega.leelaz.getBestMoves();
-
-        Graphics2D g = (Graphics2D) branchStonesImage.getGraphics();
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        Graphics2D gShadow = (Graphics2D) branchStonesShadowImage.getGraphics();
-        gShadow.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-        if (Omega.frame.mouseHoverCoordinate != null) {
-            for (int i = 0; i < bestMoves.size(); i++) {
-                MoveData move = bestMoves.get(i);
-                int[] coord = Board.convertNameToCoordinates(move.coordinate);
-            }
-        }
-    }
-
-    /**
      * render the shadows and stones in correct background-foreground order
      */
     private void renderImages(Graphics2D g) {
@@ -244,17 +190,17 @@ public class BoardRenderer {
     /**
      * Draw all of Leelaz's suggestions as colored stones with winrate/playout statistics overlayed
      */
-    private void drawLeelazSuggestions(Graphics2D g) {
+    private void drawHeatmap(Graphics2D g) {
         final int MIN_ALPHA = 32;
         final int MIN_ALPHA_TO_DISPLAY_TEXT = 64;
         final int MAX_ALPHA = 240;
         final double HUE_SCALING_FACTOR = 3.0;
         final double ALPHA_SCALING_FACTOR = 5.0;
 
-        if (!bestMoves.isEmpty()) {
+        if (heatmap != null && !heatmap.isEmpty()) {
 
             int maxPlayouts = 0;
-            for (MoveData move : bestMoves) {
+            for (MoveData move : heatmap) {
                 if (move.playouts > maxPlayouts)
                     maxPlayouts = move.playouts;
             }
@@ -264,7 +210,7 @@ public class BoardRenderer {
                     MoveData move = null;
 
                     // this is inefficient but it looks better with shadows
-                    for (MoveData m : bestMoves) {
+                    for (MoveData m : heatmap) {
                         int[] coord = Board.convertNameToCoordinates(m.coordinate);
                         if (coord[0] == i && coord[1] == j) {
                             move = m;
@@ -275,7 +221,7 @@ public class BoardRenderer {
                     if (move == null)
                         continue;
 
-                    boolean isBestMove = bestMoves.get(0) == move;
+                    boolean isBestMove = heatmap.get(0) == move;
 
                     if (move.playouts == 0) // this actually can happen
                         continue;
@@ -299,24 +245,24 @@ public class BoardRenderer {
                     Color hsbColor = Color.getHSBColor(hue, saturation, brightness);
                     Color color = new Color(hsbColor.getRed(), hsbColor.getBlue(), hsbColor.getGreen(), alpha);
 
-                        drawShadow(g, suggestionX, suggestionY, true, (float) alpha / 255);
-                        g.setColor(color);
-                        fillCircle(g, suggestionX, suggestionY, stoneRadius);
+                    drawShadow(g, suggestionX, suggestionY, true, (float) alpha / 255);
+                    g.setColor(color);
+                    fillCircle(g, suggestionX, suggestionY, stoneRadius);
 
-                        // highlight LeelaZero's top recommended move
-                        int strokeWidth = 1;
-                        if (isBestMove) { // this is the best move
-                            strokeWidth = 2;
-                            g.setColor(Color.RED);
-                            g.setStroke(new BasicStroke(strokeWidth));
-                        } else {
-                            g.setColor(color.darker());
-                        }
-                        drawCircle(g, suggestionX, suggestionY, stoneRadius - strokeWidth / 2);
-                        g.setStroke(new BasicStroke(1));
+                    // highlight LeelaZero's top recommended move
+                    int strokeWidth = 1;
+                    if (isBestMove) { // this is the best move
+                        strokeWidth = 2;
+                        g.setColor(Color.RED);
+                        g.setStroke(new BasicStroke(strokeWidth));
+                    } else {
+                        g.setColor(color.darker());
+                    }
+                    drawCircle(g, suggestionX, suggestionY, stoneRadius - strokeWidth / 2);
+                    g.setStroke(new BasicStroke(1));
 
 
-                    if (alpha >= MIN_ALPHA_TO_DISPLAY_TEXT || (Omega.frame.mouseHoverCoordinate != null && coordinates[0] == Omega.frame.mouseHoverCoordinate[0] && coordinates[1] == Omega.frame.mouseHoverCoordinate[1])) {
+                    if (alpha >= MIN_ALPHA_TO_DISPLAY_TEXT) {
                         double roundedWinrate = Math.round(move.winrate * 10) / 10.0;
                         g.setColor(Color.BLACK);
                         if (Omega.board.getData().blackToPlay)
@@ -331,18 +277,18 @@ public class BoardRenderer {
     }
 
     private void drawWoodenBoard(Graphics2D g) {
-            // fancy version
-            try {
-                int shadowRadius = (int) (boardLength * MARGIN / 6);
-                g.drawImage(ImageIO.read(new File("assets/board.png")), x - 2 * shadowRadius, y - 2 * shadowRadius, boardLength + 4 * shadowRadius, boardLength + 4 * shadowRadius, null);
-                g.setStroke(new BasicStroke(shadowRadius * 2));
-                // draw border
-                g.setColor(new Color(0, 0, 0, 50));
-                g.drawRect(x - shadowRadius, y - shadowRadius, boardLength + 2 * shadowRadius, boardLength + 2 * shadowRadius);
-                g.setStroke(new BasicStroke(1));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // fancy version
+        try {
+            int shadowRadius = (int) (boardLength * MARGIN / 6);
+            g.drawImage(ImageIO.read(new File("assets/board.png")), x - 2 * shadowRadius, y - 2 * shadowRadius, boardLength + 4 * shadowRadius, boardLength + 4 * shadowRadius, null);
+            g.setStroke(new BasicStroke(shadowRadius * 2));
+            // draw border
+            g.setColor(new Color(0, 0, 0, 50));
+            g.drawRect(x - shadowRadius, y - shadowRadius, boardLength + 2 * shadowRadius, boardLength + 2 * shadowRadius);
+            g.setStroke(new BasicStroke(1));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -373,6 +319,7 @@ public class BoardRenderer {
     }
 
     private static final int SHADOW_SIZE = 100; // TODO remove hardcoded value
+
     private void drawShadow(Graphics2D g, int centerX, int centerY, boolean isGhost, float shadowStrength) {
         final int shadowSize = (int) (stoneRadius * 0.3 * SHADOW_SIZE / 100);
         final int fartherShadowSize = (int) (stoneRadius * 0.17 * SHADOW_SIZE / 100);
@@ -430,39 +377,39 @@ public class BoardRenderer {
 
         switch (color) {
             case BLACK:
-                    drawShadow(gShadow, centerX, centerY, false);
-                    try {
-                        g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                drawShadow(gShadow, centerX, centerY, false);
+                try {
+                    g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
 
             case WHITE:
-                    drawShadow(gShadow, centerX, centerY, false);
-                    try {
-                        g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                drawShadow(gShadow, centerX, centerY, false);
+                try {
+                    g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
 
             case BLACK_GHOST:
-                    drawShadow(gShadow, centerX, centerY, true);
-                    try {
-                        g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                drawShadow(gShadow, centerX, centerY, true);
+                try {
+                    g.drawImage(ImageIO.read(new File("assets/black0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
 
             case WHITE_GHOST:
-                    drawShadow(gShadow, centerX, centerY, true);
-                    try {
-                        g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                drawShadow(gShadow, centerX, centerY, true);
+                try {
+                    g.drawImage(ImageIO.read(new File("assets/white0.png")), centerX - stoneRadius, centerY - stoneRadius, stoneRadius * 2 + 1, stoneRadius * 2 + 1, null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
 
             default:

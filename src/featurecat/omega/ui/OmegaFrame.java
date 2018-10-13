@@ -20,31 +20,9 @@ import java.io.IOException;
  * The window used to display the game.
  */
 public class OmegaFrame extends JFrame {
-    private static final String[] commands = {
-            "enter|play against Leela Zero",
-            "space|toggle pondering",
-            "left arrow|undo",
-            "right arrow|redo",
-            "right click|undo",
-            "scrollwheel|undo/redo",
-            "c|toggle coordinates",
-            "p|pass",
-            "m|show/hide move number",
-            "o|open SGF",
-            "s|save SGF",
-            "home|go to start",
-            "end|go to end",
-            "ctrl|undo/redo 10 moves",
-    };
     private static BoardRenderer boardRenderer;
 
     private final BufferStrategy bs;
-
-    public int[] mouseHoverCoordinate;
-    public boolean showControls = false;
-    public boolean showCoordinates = false;
-    public boolean isPlayingAgainstLeelaz = false;
-    public boolean playerIsBlack = true;
 
     static {
         // load fonts
@@ -122,36 +100,33 @@ public class OmegaFrame extends JFrame {
         if (bs == null)
             return;
 
-        if (!showControls) {
-            // initialize
-            cachedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = (Graphics2D) cachedImage.getGraphics();
-            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        // initialize
+        cachedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) cachedImage.getGraphics();
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-            int topInset = this.getInsets().top;
+        int topInset = this.getInsets().top;
 
-            try {
-                BufferedImage background = ImageIO.read(new File("assets/background.jpg"));
-                int drawWidth = Math.max(background.getWidth(), getWidth());
-                int drawHeight = Math.max(background.getHeight(), getHeight());
-                g.drawImage(background, 0, 0, drawWidth, drawHeight, null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            int maxSize = (int) (Math.min(getWidth(), getHeight() - topInset) * 0.98);
-            maxSize = Math.max(maxSize, Board.BOARD_SIZE + 5); // don't let maxWidth become too small
-
-            int boardX = (getWidth() - maxSize) / 2;
-            int boardY = topInset + (getHeight() - topInset - maxSize) / 2 + 3;
-            boardRenderer.setLocation(boardX, boardY);
-            boardRenderer.setBoardLength(maxSize);
-            boardRenderer.draw(g);
-
-
-            // cleanup
-            g.dispose();
+        try {
+            BufferedImage background = ImageIO.read(new File("assets/background.jpg"));
+            int drawWidth = Math.max(background.getWidth(), getWidth());
+            int drawHeight = Math.max(background.getHeight(), getHeight());
+            g.drawImage(background, 0, 0, drawWidth, drawHeight, null);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        int maxSize = (int) (Math.min(getWidth(), getHeight() - topInset) * 0.98);
+        maxSize = Math.max(maxSize, Board.BOARD_SIZE + 5); // don't let maxWidth become too small
+
+        int boardX = (getWidth() - maxSize) / 2;
+        int boardY = topInset + (getHeight() - topInset - maxSize) / 2 + 3;
+        boardRenderer.setLocation(boardX, boardY);
+        boardRenderer.setBoardLength(maxSize);
+        boardRenderer.draw(g);
+
+        // cleanup
+        g.dispose();
 
         // draw the image
         Graphics2D bsGraphics = (Graphics2D) bs.getDrawGraphics();
@@ -174,23 +149,11 @@ public class OmegaFrame extends JFrame {
         int[] boardCoordinates = boardRenderer.convertScreenToCoordinates(x, y);
 
         if (boardCoordinates != null) {
-            if (!isPlayingAgainstLeelaz || (playerIsBlack == Omega.board.getData().blackToPlay))
-                Omega.board.place(boardCoordinates[0], boardCoordinates[1]);
+            Omega.board.place(boardCoordinates[0], boardCoordinates[1]);
         }
     }
 
     public void onMouseMoved(int x, int y) {
 
-        int[] newMouseHoverCoordinate = boardRenderer.convertScreenToCoordinates(x, y);
-        if (mouseHoverCoordinate != null && newMouseHoverCoordinate != null && (mouseHoverCoordinate[0] != newMouseHoverCoordinate[0] || mouseHoverCoordinate[1] != newMouseHoverCoordinate[1])) {
-            mouseHoverCoordinate = newMouseHoverCoordinate;
-            repaint();
-        } else {
-            mouseHoverCoordinate = newMouseHoverCoordinate;
-        }
-    }
-
-    public void toggleCoordinates() {
-        showCoordinates = !showCoordinates;
     }
 }
