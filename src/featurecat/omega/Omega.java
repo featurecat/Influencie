@@ -4,6 +4,7 @@ import featurecat.omega.analysis.Leelaz;
 import featurecat.omega.rules.Board;
 import featurecat.omega.ui.OmegaFrame;
 
+import javax.swing.*;
 import java.io.IOException;
 
 /**
@@ -20,7 +21,9 @@ public class Omega {
     /**
      * Launches the game window, and runs the game.
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
         leelaz = new Leelaz();
         leelaz.togglePonder();
 
