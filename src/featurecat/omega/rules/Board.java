@@ -1,6 +1,7 @@
 package featurecat.omega.rules;
 
 import featurecat.omega.Omega;
+import featurecat.omega.ui.PlaceMode;
 
 public class Board {
     public static final int BOARD_SIZE = 19;
@@ -182,6 +183,11 @@ public class Board {
      * @param y y coordinate
      */
     public void place(int x, int y) {
+        if (Omega.placeMode == PlaceMode.REMOVE) {
+            deleteStone(x, y);
+            return;
+        }
+
         Stone colorToPlay;
 
         switch (Omega.placeMode) {
@@ -196,6 +202,7 @@ public class Board {
             case ALTERNATING:
             default:
                 colorToPlay = history.isBlacksTurn() ? Stone.BLACK : Stone.WHITE;
+                break;
         }
         place(x, y, colorToPlay);
     }
@@ -283,15 +290,48 @@ public class Board {
         if (!isValid(x, y) || stones[getIndex(x, y)] != color)
             return;
 
-        stones[getIndex(x, y)] = removeStones ? Stone.EMPTY : color.unrecursed();
-        if (removeStones)
-            zobrist.toggleStone(x, y, color.unrecursed());
+        if (removeStones) {
+            deleteStone(x, y, stones, zobrist);
+        } else {
+            stones[getIndex(x, y)] = color.unrecursed();
+        }
 
         // use the flood fill algorithm to replace all adjacent recursed stones
         cleanupHasLibertiesHelper(x + 1, y, color, stones, zobrist, removeStones);
         cleanupHasLibertiesHelper(x, y + 1, color, stones, zobrist, removeStones);
         cleanupHasLibertiesHelper(x - 1, y, color, stones, zobrist, removeStones);
         cleanupHasLibertiesHelper(x, y - 1, color, stones, zobrist, removeStones);
+    }
+
+    private void deleteStone(int x, int y, Stone[] stones, Zobrist zobrist) {
+        Stone color = stones[getIndex(x, y)];
+        stones[getIndex(x, y)] = Stone.EMPTY;
+        zobrist.toggleStone(x, y, color.unrecursed());
+    }
+
+    private void deleteStone(int x, int y) {
+        if (getStones()[getIndex(x, y)] == Stone.EMPTY) {
+            return;
+        }
+
+        // load a copy of the data at the current node of history
+        Stone[] stones = history.getStones().clone();
+        Zobrist zobrist = history.getZobrist();
+        int moveNumber = history.getMoveNumber() + 1;
+        int[] moveNumberList = history.getMoveNumberList().clone();
+
+        deleteStone(x, y, stones, zobrist);
+
+        // build the new game state
+        BoardData newState = new BoardData(stones, null, Stone.EMPTY, !history.isBlacksTurn(), zobrist, moveNumber, moveNumberList);
+
+        // TODO how to update leelaz? This might be a problem.
+        // Omega.leelaz.playMove(color, "pass");
+
+        // update history
+        history.add(newState);
+
+        Omega.frame.repaint();
     }
 
     /**

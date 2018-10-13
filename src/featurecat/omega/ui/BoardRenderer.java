@@ -179,7 +179,7 @@ public class BoardRenderer {
             g.setColor(Omega.board.getStones()[Board.getIndex(lastMove[0], lastMove[1])].isWhite() ?
                     Color.BLACK : Color.WHITE);
             drawCircle(g, stoneX, stoneY, lastMoveMarkerRadius);
-        } else if (lastMove == null && Omega.board.getData().moveNumber != 0) {
+        } else if (lastMove == null && Omega.board.getData().lastMoveColor != Stone.EMPTY && Omega.board.getData().moveNumber != 0) {
             g.setColor(Omega.board.getData().blackToPlay ? new Color(255, 255, 255, 150) : new Color(0, 0, 0, 150));
             g.fillOval(x + boardLength / 2 - 4 * stoneRadius, y + boardLength / 2 - 4 * stoneRadius, stoneRadius * 8, stoneRadius * 8);
             g.setColor(Omega.board.getData().blackToPlay ? new Color(0, 0, 0, 255) : new Color(255, 255, 255, 255));

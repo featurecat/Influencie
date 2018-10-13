@@ -174,7 +174,7 @@ public class Leelaz {
                     colorString = "W";
                     break;
                 default:
-                    throw new IllegalArgumentException("The stone color must be BLACK or WHITE, but was " + color.toString());
+                    return; // Do nothing if t he stone color is empty
             }
 
             sendCommand("play " + colorString + " " + move);

@@ -26,6 +26,7 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         command(KeyEvent.VK_W, () -> Omega.placeMode = PlaceMode.WHITE);
         command(KeyEvent.VK_B, () -> Omega.placeMode = PlaceMode.BLACK);
         command(KeyEvent.VK_A, () -> Omega.placeMode = PlaceMode.ALTERNATING);
+        command(KeyEvent.VK_R, () -> Omega.placeMode = PlaceMode.REMOVE);
     }
 
     private void command(int keyCode, Runnable action) {
