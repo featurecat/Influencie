@@ -1,4 +1,4 @@
-package featurecat.ui;
+package featurecat.omega.ui;
 
 public class OmegaFrame {
 }

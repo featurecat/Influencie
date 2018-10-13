@@ -1,6 +1,6 @@
-package featurecat;
+package featurecat.omega;
 
-import featurecat.ui.OmegaFrame;
+import featurecat.omega.ui.OmegaFrame;
 
 public class Omega {
 
