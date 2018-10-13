@@ -1,10 +1,7 @@
 package featurecat.omega.analysis;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import wagner.stephanie.lizzie.Lizzie;
-import wagner.stephanie.lizzie.rules.Stone;
+import featurecat.omega.Omega;
+import featurecat.omega.rules.Stone;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -43,7 +40,7 @@ public class Leelaz {
      *
      * @throws IOException
      */
-    public Leelaz() throws IOException, JSONException {
+    public Leelaz() throws IOException {
         isReadingPonderOutput = false;
         bestMoves = new ArrayList<>();
         bestMovesTemp = new ArrayList<>();
@@ -51,34 +48,13 @@ public class Leelaz {
         isPondering = false;
         startPonderTime = System.currentTimeMillis();
 
-        JSONObject config = Lizzie.config.config.getJSONObject("leelaz");
-
-        maxAnalyzeTimeMillis = MINUTE * config.getInt("max-analyze-time-minutes");
-//        maxThinkingTimeMillis = SECOND * config.getInt("max-game-thinking-time-seconds");
-
 
         // list of commands for the leelaz process
         List<String> commands = new ArrayList<>();
         commands.add("./leelaz"); // windows, linux, mac all understand this
         commands.add("-g");
-        commands.add("-t" + config.getInt("threads"));
-        commands.add("-w" + config.getString("weights"));
+        commands.add("-w" + Omega.NETWORK_STRING);
         commands.add("-b0");
-
-//        if (config.getBoolean("noise")) {
-//            commands.add("-n");
-//        }
-
-        try {
-            JSONArray gpu = config.getJSONArray("gpu");
-
-            for (int i = 0; i < gpu.length(); i++) {
-                commands.add("--gpu");
-                commands.add(String.valueOf(gpu.getInt(i)));
-            }
-        } catch (Exception e) {
-            // Nothing
-        }
 
         // run leelaz
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
@@ -119,7 +95,7 @@ public class Leelaz {
                 isReadingPonderOutput = false;
                 bestMoves = bestMovesTemp;
 
-                Lizzie.frame.repaint();
+                Omega.frame.repaint();
             } else {
 
                 if (isReadingPonderOutput) {
@@ -131,9 +107,9 @@ public class Leelaz {
                     System.out.print(line);
 
                     line = line.trim();
-                    if (Lizzie.frame != null && line.startsWith("=")&&line.length() > 2 && isThinking) {
-                        if (Lizzie.frame.isPlayingAgainstLeelaz) {
-                            Lizzie.board.place(line.substring(2));
+                    if (Omega.frame != null && line.startsWith("=")&&line.length() > 2 && isThinking) {
+                        if (Omega.frame.isPlayingAgainstLeelaz) {
+                            Omega.board.place(line.substring(2));
                         }
                         isThinking=false;
                     }
@@ -205,7 +181,7 @@ public class Leelaz {
             sendCommand("play " + colorString + " " + move);
             bestMoves = new ArrayList<>();
 
-            if (isPondering && !Lizzie.frame.isPlayingAgainstLeelaz)
+            if (isPondering && !Omega.frame.isPlayingAgainstLeelaz)
                 ponder();
         }
     }
