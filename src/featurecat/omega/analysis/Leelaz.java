@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * an interface with leelaz.exe go engine. Can be adapted for GTP, but is specifically designed for GCP's Leela Zero.
@@ -16,24 +18,16 @@ import java.util.List;
  * see www.github.com/gcp/leela-zero
  */
 public class Leelaz {
-    private static final long MINUTE = 60 * 1000; // number of milliseconds in a minute
-//    private static final long SECOND = 1000;
-    private long maxAnalyzeTimeMillis;//, maxThinkingTimeMillis;
-
     private Process process;
 
     private BufferedInputStream inputStream;
     private BufferedOutputStream outputStream;
 
-    private boolean isReadingPonderOutput;
-    private List<MoveData> bestMoves;
-    private List<MoveData> bestMovesTemp;
+    private boolean isParsingHeatmap = false;
+    private List<String> heatmapStrings;
+    private Consumer<LeelazData> heatmapPromise;
 
-    private boolean isPondering;
-    private long startPonderTime;
-
-    // genmove
-    public boolean isThinking = false;
+    private boolean isLoaded = false;
 
     /**
      * Initializes the leelaz process and starts reading output
@@ -41,32 +35,25 @@ public class Leelaz {
      * @throws IOException
      */
     public Leelaz() throws IOException {
-        isReadingPonderOutput = false;
-        bestMoves = new ArrayList<>();
-        bestMovesTemp = new ArrayList<>();
-
-        isPondering = false;
-        startPonderTime = System.currentTimeMillis();
-
-
         // list of commands for the leelaz process
         List<String> commands = new ArrayList<>();
         commands.add("./leelaz"); // windows, linux, mac all understand this
         commands.add("-g");
         commands.add("-w" + Omega.NETWORK_STRING);
-        commands.add("-b0");
+        commands.add("--noponder");
 
         // run leelaz
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.directory(new File("."));
         processBuilder.redirectErrorStream(true);
-        // TODO reinitiailze
-//        process = processBuilder.start();
+        process = processBuilder.start();
 
-//        initializeStreams();
+        initializeStreams();
 
         // start a thread to continuously read Leelaz output
-//        new Thread(this::read).start();
+        new Thread(this::read).start();
+
+        sendCommand("name");
     }
 
     /**
@@ -84,32 +71,22 @@ public class Leelaz {
      */
     private void parseLine(String line) {
         synchronized (this) {
-            if (line.startsWith("~begin")) {
-                if (System.currentTimeMillis() - startPonderTime > maxAnalyzeTimeMillis) {
-                    // we have pondered for enough time. pause pondering
-                    togglePonder();
+            {
+                if (!isLoaded && line.startsWith("=")) {
+                    isLoaded = true;
+                    return;
                 }
-
-                isReadingPonderOutput = true;
-                bestMovesTemp = new ArrayList<>();
-            } else if (line.startsWith("~end")) {
-                isReadingPonderOutput = false;
-                bestMoves = bestMovesTemp;
-
-                Omega.frame.repaint();
-            } else {
-
-                if (isReadingPonderOutput) {
-                    line=line.trim();
-                    // ignore passes, and only accept lines that start with a coordinate letter
-                    if (Character.isLetter(line.charAt(0)) && !line.startsWith("pass"))
-                        bestMovesTemp.add(new MoveData(line));
-                } else {
-                    System.out.print(line);
-
-                    line = line.trim();
-                    if (Omega.frame != null && line.startsWith("=")&&line.length() > 2 && isThinking) {
-                        isThinking=false;
+//                System.out.print(line);
+                if (isLoaded) {
+                    if (isParsingHeatmap) {
+                        if (line.startsWith("=")) {
+                            if (heatmapStrings.size() >= 21) {
+                                isParsingHeatmap = false;
+                                heatmapPromise.accept(new LeelazData(heatmapStrings));
+                            } // otherwise it must be a different command. wow we need a more robust system but this should work.
+                        } else if (!(line = line.trim()).isEmpty() && Character.isDigit(line.charAt(0)) || line.matches("(pass: |winrate: ).+")) {
+                            heatmapStrings.add(line);
+                        }
                     }
                 }
             }
@@ -146,17 +123,27 @@ public class Leelaz {
      *
      * @param command a GTP command containing no newline characters
      */
-    public void sendCommand(String command) {
-        return; // TODO remove
-//        System.out.println(command);
-//        if (command.startsWith("genmove"))
-//            isThinking = true;
-//        try {
-//            outputStream.write((command + "\n").getBytes());
-//            outputStream.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    private void sendCommand(String command) {
+        try {
+            outputStream.write((command + "\n").getBytes());
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @param heatmapPromise this function will be called when the heatmap data is ready.
+     */
+    public void heatmap(Consumer<LeelazData> heatmapPromise) {
+        if (isParsingHeatmap) {
+            System.out.println("Leelaz is already parsing a heatmap. Abort");
+            return;
+        }
+        isParsingHeatmap = true;
+        heatmapStrings = new ArrayList<>();
+        this.heatmapPromise = heatmapPromise;
+        sendCommand("heatmap");
     }
 
     /**
@@ -174,39 +161,17 @@ public class Leelaz {
                     colorString = "W";
                     break;
                 default:
-                    return; // Do nothing if t he stone color is empty
+                    return; // Do nothing if the stone color is empty TODO this probably means deleting stone, so we need to figure out what to do here.
             }
 
             sendCommand("play " + colorString + " " + move);
-            bestMoves = new ArrayList<>();
-
+            heatmap((LeelazData data) -> System.out.println(data));
         }
     }
 
     public void undo() {
         synchronized (this) {
             sendCommand("undo");
-            bestMoves = new ArrayList<>();
-            if (isPondering)
-                ponder();
-        }
-    }
-
-    /**
-     * this initializes leelaz's pondering mode at its current position
-     */
-    private void ponder() {
-        isPondering = true;
-        startPonderTime = System.currentTimeMillis();
-        sendCommand("time_left b 0 0");
-    }
-
-    public void togglePonder() {
-        isPondering = !isPondering;
-        if (isPondering) {
-            ponder();
-        } else {
-            sendCommand("name"); // ends pondering
         }
     }
 
@@ -214,16 +179,6 @@ public class Leelaz {
      * End the process
      */
     public void shutdown() {
-        //process.destroy(); // TODO enable
-    }
-
-    public List<MoveData> getBestMoves() {
-        synchronized (this) {
-            return bestMoves;
-        }
-    }
-
-    public boolean isPondering() {
-        return isPondering;
+        process.destroy();
     }
 }

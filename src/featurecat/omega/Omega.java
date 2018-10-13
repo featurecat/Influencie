@@ -1,6 +1,7 @@
 package featurecat.omega;
 
 import featurecat.omega.analysis.Leelaz;
+import featurecat.omega.analysis.LeelazData;
 import featurecat.omega.rules.Board;
 import featurecat.omega.rules.Search;
 import featurecat.omega.rules.SearchData;
@@ -31,7 +32,6 @@ public class Omega {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         leelaz = new Leelaz();
-        leelaz.togglePonder();
 
         board = new Board();
         frame = new OmegaFrame();

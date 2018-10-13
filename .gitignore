@@ -2,3 +2,6 @@
 out/
 *.iml
 *.exe
+*.dll
+*.gz
+leelaz
