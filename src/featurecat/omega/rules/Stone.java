@@ -1,7 +1,7 @@
 package featurecat.omega.rules;
 
 public enum Stone {
-    BLACK, WHITE, EMPTY, BLACK_RECURSED, WHITE_RECURSED, BLACK_GHOST, WHITE_GHOST;
+    BLACK, WHITE, EMPTY, BLACK_RECURSED, WHITE_RECURSED, BLACK_GHOST, WHITE_GHOST, UNSPECIFIED;
 
     /**
      * used to find the opposite color stone
