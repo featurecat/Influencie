@@ -1,5 +1,6 @@
 package featurecat.omega.rules;
 
+import featurecat.omega.Omega;
 import featurecat.omega.analysis.SGFParser;
 
 import javax.swing.*;
@@ -23,23 +24,12 @@ public class Search {
         } catch (IOException err) {
             JOptionPane.showConfirmDialog(null, "Failed to open the SGF file.", "Error", JOptionPane.ERROR);
         }
-        System.out.println("last move" + fileBoard.getLastMove()[0] + " " + fileBoard.getLastMove()[1]);
+        while (fileBoard.previousMove()) ;
         BoardHistoryList boardHistoryList = fileBoard.getHistory();
-        Stone[] stones = boardHistoryList.getStones();
-//        for (Stone s : stones) {
-//            System.out.println(s);
-//        }
-
-        // System.out.println("x" + boardHistoryList.getNext().lastMove[0]);
-        // System.out.println("y" + boardHistoryList.getNext().lastMove[1]);
-        ArrayList<SearchData> positionList = new ArrayList<SearchData>();
-        int count = 0;
+        ArrayList<SearchData> positionList = new ArrayList<>();
         while (true) {
             BoardData boardData = boardHistoryList.next();
-            System.out.println(count);
-            count ++;
             if (boardData == null) {
-                System.out.println("break");
                 break;
             }
             Stone[] symmetricPosition = compareBoardPositions(position, boardData.stones, boardData.lastMove);
@@ -59,20 +49,33 @@ public class Search {
      * @return the symmetric position that the fileStones match
      */
     private static Stone[] compareBoardPositions(Stone[] position, Stone[] fileStones, int[] lastMove) {
-        for (int mode = 0; mode < 8; mode ++) {
-            Stone[] symmetricPosition = getSymmetricStones(position, mode);
-            for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
-                if ((!symmetricPosition[i].equals(Stone.UNSPECIFIED) ||
-                        (i == lastMove[0] * Board.BOARD_SIZE + lastMove[1])) &&
-                        !symmetricPosition[i].equals(fileStones[i])) {
-                    break;
+        Stone[] flippedPosition = flipColor(position);
+        for (Stone[] p : new Stone[][]{position, flippedPosition}) {
+            for (int mode = 0; mode < 8; mode ++) {
+                Stone[] symmetricPosition = getSymmetricStones(p, mode);
+                boolean hasPosition = true;
+                for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
+                    if ((!symmetricPosition[i].equals(Stone.UNSPECIFIED) ||
+                            (i == lastMove[0] * Board.BOARD_SIZE + lastMove[1])) &&
+                            !symmetricPosition[i].equals(fileStones[i])) {
+                        hasPosition = false;
+                        break;
+                    }
                 }
-                else if (i == Board.BOARD_SIZE * Board.BOARD_SIZE - 1) {
+                if (hasPosition) {
                     return symmetricPosition;
                 }
             }
         }
         return null;
+    }
+
+    private static Stone[] flipColor(Stone[] position) {
+        Stone[] flippedPosition = new Stone[Board.BOARD_SIZE * Board.BOARD_SIZE];
+        for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
+            flippedPosition[i] = position[i].opposite();
+        }
+        return flippedPosition;
     }
 
     /**
@@ -97,7 +100,7 @@ public class Search {
             symmetry = original.clone();
         }
         if (mode % 2 == 1) {
-            for (int x = 0; x < Board.BOARD_SIZE / 2; x++) {
+            for (int x = 0; x < Board.BOARD_SIZE / 2 + 1; x++) {
                 for (int y = 0; y < Board.BOARD_SIZE / 2; y++) {
                     Stone temp = symmetry[x * Board.BOARD_SIZE + y];
                     symmetry[x * Board.BOARD_SIZE + y] = symmetry[y * Board.BOARD_SIZE + (Board.BOARD_SIZE - 1 - x)];
