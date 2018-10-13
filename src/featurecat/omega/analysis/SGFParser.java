@@ -35,6 +35,8 @@ public class SGFParser {
     }
 
     private static boolean parse(String value, Board board) {
+        System.out.println("hiii");
+        System.out.println(value);
         value = value.trim();
         if (value.charAt(0) != '(') {
             return false;
@@ -111,6 +113,7 @@ public class SGFParser {
                 tagContentBuffer.append(c);
             }
         }
+
         return true;
     }
 }

@@ -15,7 +15,7 @@ public class Search {
      * @param filename the file to search
      * @return arraylist of all matching positions
      */
-    public ArrayList<SearchData> getMatchingPositions(Stone[] position, String filename) {
+    public static ArrayList<SearchData> getMatchingPositions(Stone[] position, String filename) {
         Board fileBoard = new Board();
         try {
             System.out.println(filename);
@@ -23,11 +23,23 @@ public class Search {
         } catch (IOException err) {
             JOptionPane.showConfirmDialog(null, "Failed to open the SGF file.", "Error", JOptionPane.ERROR);
         }
+        System.out.println("last move" + fileBoard.getLastMove()[0] + " " + fileBoard.getLastMove()[1]);
         BoardHistoryList boardHistoryList = fileBoard.getHistory();
+        Stone[] stones = boardHistoryList.getStones();
+//        for (Stone s : stones) {
+//            System.out.println(s);
+//        }
+
+        // System.out.println("x" + boardHistoryList.getNext().lastMove[0]);
+        // System.out.println("y" + boardHistoryList.getNext().lastMove[1]);
         ArrayList<SearchData> positionList = new ArrayList<SearchData>();
+        int count = 0;
         while (true) {
             BoardData boardData = boardHistoryList.next();
+            System.out.println(count);
+            count ++;
             if (boardData == null) {
+                System.out.println("break");
                 break;
             }
             Stone[] symmetricPosition = compareBoardPositions(position, boardData.stones, boardData.lastMove);
@@ -46,7 +58,7 @@ public class Search {
      * @param lastMove last move, must be in the position
      * @return the symmetric position that the fileStones match
      */
-    private Stone[] compareBoardPositions(Stone[] position, Stone[] fileStones, int[] lastMove) {
+    private static Stone[] compareBoardPositions(Stone[] position, Stone[] fileStones, int[] lastMove) {
         for (int mode = 0; mode < 8; mode ++) {
             Stone[] symmetricPosition = getSymmetricStones(position, mode);
             for (int i = 0; i < Board.BOARD_SIZE * Board.BOARD_SIZE; i++) {
@@ -71,7 +83,7 @@ public class Search {
      *             4-7 flips the board along y=x first and then rotate.
      * @return transformed board
      */
-    private Stone[] getSymmetricStones(Stone[] original, int mode) {
+    private static Stone[] getSymmetricStones(Stone[] original, int mode) {
         Stone[] symmetry = new Stone[Board.BOARD_SIZE * Board.BOARD_SIZE];
         if (mode >= 4) {
             for (int x = 0; x < Board.BOARD_SIZE; x++) {
