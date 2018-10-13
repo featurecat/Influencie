@@ -3,11 +3,34 @@ package featurecat.omega.ui;
 import featurecat.omega.Omega;
 
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 
 public class Input implements MouseListener, KeyListener, MouseWheelListener, MouseMotionListener {
     private boolean controlIsPressed = false;
+
+    private List<Command> commands = new ArrayList<>();
+
+    public Input() {
+        command(KeyEvent.VK_RIGHT, this::redo);
+        command(KeyEvent.VK_LEFT, this::undo);
+        command(KeyEvent.VK_O, () -> Omega.frame.openSgf());
+        command(KeyEvent.VK_HOME, () -> {
+            while (Omega.board.previousMove()) ;
+        });
+        command(KeyEvent.VK_END, () -> {
+            while (Omega.board.nextMove()) ;
+        });
+        command(KeyEvent.VK_W, () -> Omega.placeMode = PlaceMode.WHITE);
+        command(KeyEvent.VK_B, () -> Omega.placeMode = PlaceMode.BLACK);
+        command(KeyEvent.VK_A, () -> Omega.placeMode = PlaceMode.ALTERNATING);
+    }
+
+    private void command(int keyCode, Runnable action) {
+        commands.add(new Command(keyCode, action));
+    }
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -83,28 +106,14 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
                 controlIsPressed = true;
                 break;
 
-            case VK_RIGHT:
-                redo();
-                break;
-
-            case VK_LEFT:
-                undo();
-                break;
-
-            case VK_O:
-                if (Omega.leelaz.isPondering())
-                    Omega.leelaz.togglePonder();
-                Omega.frame.openSgf();
-                break;
-
-            case VK_HOME:
-                while (Omega.board.previousMove()) ;
-                break;
-
-            case VK_END:
-                while (Omega.board.nextMove()) ;
-                break;
             default:
+        }
+
+        for (Command command : commands) {
+            if (e.getKeyCode() == command.getKeyCode()) {
+                command.call();
+                break;
+            }
         }
     }
 

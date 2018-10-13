@@ -247,7 +247,22 @@ public class Board {
      * @param y y coordinate
      */
     public void place(int x, int y) {
-        place(x, y, history.isBlacksTurn() ? Stone.BLACK : Stone.WHITE);
+        Stone colorToPlay;
+
+        switch (Omega.placeMode) {
+            case BLACK:
+                colorToPlay = Stone.BLACK;
+                break;
+
+            case WHITE:
+                colorToPlay = Stone.WHITE;
+                break;
+
+            case ALTERNATING:
+            default:
+                colorToPlay = history.isBlacksTurn() ? Stone.BLACK : Stone.WHITE;
+        }
+        place(x, y, colorToPlay);
     }
 
     /**
