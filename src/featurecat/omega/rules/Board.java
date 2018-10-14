@@ -20,6 +20,17 @@ public class Board {
         history = new BoardHistoryList(new BoardData(stones, lastMove, Stone.EMPTY, blackToPlay, new Zobrist(), 0, new int[BOARD_SIZE * BOARD_SIZE]));
     }
 
+    public Board(BoardHistoryList history) {
+        Stone[] stones = new Stone[BOARD_SIZE * BOARD_SIZE];
+        for (int i = 0; i < stones.length; i++)
+            stones[i] = Stone.EMPTY;
+
+        boolean blackToPlay = true;
+        int[] lastMove = null;
+
+        this.history = history;
+    }
+
     /**
      * Calculates the array index of a stone stored at (x, y)
      *

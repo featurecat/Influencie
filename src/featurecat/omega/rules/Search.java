@@ -1,6 +1,7 @@
 package featurecat.omega.rules;
 
 import featurecat.omega.Omega;
+import featurecat.omega.analysis.LeelazData;
 import featurecat.omega.analysis.SGFParser;
 
 import javax.swing.*;
@@ -8,6 +9,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Search {
+
+    public static void getHeatmapsOfMatchingPositions(Stone[] position, String[] filenames) {
+        ArrayList<SearchData> positionList = new ArrayList<>();
+        for (String filename : filenames) {
+            positionList.addAll(getMatchingPositions(position, filename));
+        }
+        for (SearchData searchData : positionList) {
+            Board board = new Board(searchData.boardHistoryList);
+            Omega.leelaz.clearBoard();
+            int moveNumber = searchData.moveNumber;
+            System.out.println("movenumber " + moveNumber);
+            while (board.previousMove()) ;
+            for (int i = 0; i < moveNumber; i++) {
+                board.nextMove();
+            }
+            Omega.board = board;
+            Omega.leelaz.heatmap((LeelazData data) -> {
+                System.out.println(data);
+            });
+        }
+    }
 
     /**
      * Get all matching positions in a file
@@ -27,6 +49,7 @@ public class Search {
         while (fileBoard.previousMove()) ;
         BoardHistoryList boardHistoryList = fileBoard.getHistory();
         ArrayList<SearchData> positionList = new ArrayList<>();
+        int moveNumber = 1;
         while (true) {
             BoardData boardData = boardHistoryList.next();
             if (boardData == null) {
@@ -34,8 +57,9 @@ public class Search {
             }
             Stone[] symmetricPosition = compareBoardPositions(position, boardData.stones, boardData.lastMove);
             if (symmetricPosition != null) {
-                positionList.add(new SearchData(symmetricPosition, boardHistoryList));
+                positionList.add(new SearchData(symmetricPosition, boardHistoryList, moveNumber));
             }
+            moveNumber ++;
         }
         return positionList;
     }

@@ -168,7 +168,15 @@ public class Leelaz {
             }
 
             sendCommand("play " + colorString + " " + move);
+
             refreshHeatmap();
+
+        }
+    }
+
+    public void clearBoard() {
+        synchronized (this) {
+            sendCommand("clear_board");
         }
     }
 
