@@ -17,6 +17,7 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         command(KeyEvent.VK_RIGHT, this::redo);
         command(KeyEvent.VK_LEFT, this::undo);
         command(KeyEvent.VK_O, () -> Omega.frame.openSgf());
+        command(KeyEvent.VK_S, () -> Omega.frame.openFolder());
         command(KeyEvent.VK_HOME, () -> {
             while (Omega.board.previousMove()) ;
         });
