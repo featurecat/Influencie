@@ -2,6 +2,7 @@ package featurecat.omega.analysis;
 
 import featurecat.omega.Omega;
 import featurecat.omega.rules.Stone;
+import featurecat.omega.ui.BoardRenderer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,6 +19,8 @@ import java.util.function.Supplier;
  * see www.github.com/gcp/leela-zero
  */
 public class Leelaz {
+    public LeelazData heatmap = null;
+
     private Process process;
 
     private BufferedInputStream inputStream;
@@ -165,13 +168,22 @@ public class Leelaz {
             }
 
             sendCommand("play " + colorString + " " + move);
-            heatmap((LeelazData data) -> System.out.println(data));
+            refreshHeatmap();
         }
+    }
+
+    private void refreshHeatmap() {
+        this.heatmap = null;
+        heatmap((LeelazData data) -> {
+            this.heatmap = data;
+            Omega.frame.repaint();
+        });
     }
 
     public void undo() {
         synchronized (this) {
             sendCommand("undo");
+            refreshHeatmap();
         }
     }
 

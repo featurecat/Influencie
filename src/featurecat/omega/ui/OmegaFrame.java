@@ -62,6 +62,9 @@ public class OmegaFrame extends JFrame {
         this.addMouseWheelListener(input);
         this.addMouseMotionListener(input);
 
+        // necessary for Windows users - otherwise Lizzie shows a blank white screen on startup until updates occur.
+        repaint();
+
         // when the window is closed: save the SGF file, then run shutdown()
         this.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {

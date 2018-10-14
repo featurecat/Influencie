@@ -1,5 +1,7 @@
 package featurecat.omega.ui;
 
+import featurecat.omega.Console;
+import featurecat.omega.analysis.LeelazData;
 import featurecat.omega.analysis.MoveData;
 import featurecat.omega.rules.Zobrist;
 import featurecat.omega.Omega;
@@ -25,7 +27,6 @@ public class BoardRenderer {
     private int boardLength;
 
     private int scaledMargin, availableLength, squareLength, stoneRadius;
-    private List<MoveData> heatmap; // TODO this isnt getting set
 
     private BufferedImage cachedBackgroundImage = null;
 
@@ -192,55 +193,42 @@ public class BoardRenderer {
      */
     private void drawHeatmap(Graphics2D g) {
         final int MIN_ALPHA = 32;
-        final int MIN_ALPHA_TO_DISPLAY_TEXT = 64;
         final int MAX_ALPHA = 240;
+        final int MIN_ALPHA_TO_DISPLAY_TEXT = 64;
         final double HUE_SCALING_FACTOR = 3.0;
         final double ALPHA_SCALING_FACTOR = 5.0;
+        final double NUMBER_OF_CHOICES_FACTOR = 4;
 
-        if (heatmap != null && !heatmap.isEmpty()) {
+        System.out.println(Omega.leelaz.heatmap);
+        if (Omega.leelaz.heatmap != null) {
+            double maxProbability = 0;
 
-            int maxPlayouts = 0;
-            for (MoveData move : heatmap) {
-                if (move.playouts > maxPlayouts)
-                    maxPlayouts = move.playouts;
+            for (double d : Omega.leelaz.heatmap.moveProbabilities) {
+                maxProbability = Math.max(maxProbability, d);
             }
+
+            final double MIN_PROBABILITY_TO_DISPLAY = Math.min(Math.max(0.001, (1 - maxProbability) / (NUMBER_OF_CHOICES_FACTOR)), maxProbability / (NUMBER_OF_CHOICES_FACTOR));
+
+            maxProbability = Math.max(maxProbability, Omega.leelaz.heatmap.passProbability);
 
             for (int i = 0; i < Board.BOARD_SIZE; i++) {
                 for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                    MoveData move = null;
-
-                    // this is inefficient but it looks better with shadows
-                    for (MoveData m : heatmap) {
-                        int[] coord = Board.convertNameToCoordinates(m.coordinate);
-                        if (coord[0] == i && coord[1] == j) {
-                            move = m;
-                            break;
-                        }
+                    double probability = Omega.leelaz.heatmap.moveProbabilities[i + j * Board.BOARD_SIZE];
+                    double percentOfMax = (probability - MIN_PROBABILITY_TO_DISPLAY) / (maxProbability - MIN_PROBABILITY_TO_DISPLAY);
+                    boolean isMax = probability == maxProbability;
+                    if (!isMax && probability < MIN_PROBABILITY_TO_DISPLAY) {
+                        continue;
                     }
 
-                    if (move == null)
-                        continue;
-
-                    boolean isBestMove = heatmap.get(0) == move;
-
-                    if (move.playouts == 0) // this actually can happen
-                        continue;
-
-                    double percentPlayouts = (double) move.playouts / maxPlayouts;
-
-                    int[] coordinates = Board.convertNameToCoordinates(move.coordinate);
-                    int suggestionX = x + scaledMargin + squareLength * coordinates[0];
-                    int suggestionY = y + scaledMargin + squareLength * coordinates[1];
-
+                    int suggestionX = x + scaledMargin + squareLength * i;
+                    int suggestionY = y + scaledMargin + squareLength * j;
 
                     // -0.32 = Greenest hue, 0 = Reddest hue
-                    float hue = (float) (-0.32 * Math.max(0, Math.log(percentPlayouts) / HUE_SCALING_FACTOR + 1));
+                    float hue = (float) (-0.32 * Math.max(0, Math.log(percentOfMax) / HUE_SCALING_FACTOR + 1));
                     float saturation = 0.75f; //saturation
                     float brightness = 0.85f; //brightness
-                    int alpha = (int) (MIN_ALPHA + (MAX_ALPHA - MIN_ALPHA) * Math.max(0, Math.log(percentPlayouts) /
+                    int alpha = (int) (MIN_ALPHA + (MAX_ALPHA - MIN_ALPHA) * Math.max(0, Math.log(percentOfMax) /
                             ALPHA_SCALING_FACTOR + 1));
-//                    if (uiConfig.getBoolean("shadows-enabled"))
-//                        alpha = 255;
 
                     Color hsbColor = Color.getHSBColor(hue, saturation, brightness);
                     Color color = new Color(hsbColor.getRed(), hsbColor.getBlue(), hsbColor.getGreen(), alpha);
@@ -251,7 +239,7 @@ public class BoardRenderer {
 
                     // highlight LeelaZero's top recommended move
                     int strokeWidth = 1;
-                    if (isBestMove) { // this is the best move
+                    if (isMax) { // this is the best move
                         strokeWidth = 2;
                         g.setColor(Color.RED);
                         g.setStroke(new BasicStroke(strokeWidth));
@@ -261,15 +249,12 @@ public class BoardRenderer {
                     drawCircle(g, suggestionX, suggestionY, stoneRadius - strokeWidth / 2);
                     g.setStroke(new BasicStroke(1));
 
+                    if (isMax || alpha >= MIN_ALPHA_TO_DISPLAY_TEXT) {
 
-                    if (alpha >= MIN_ALPHA_TO_DISPLAY_TEXT) {
-                        double roundedWinrate = Math.round(move.winrate * 10) / 10.0;
+                        double roundedWinrate = Math.round(probability * 1000) / 10.0;
                         g.setColor(Color.BLACK);
-                        if (Omega.board.getData().blackToPlay)
-                            g.setColor(Color.WHITE);
 
-                        drawString(g, suggestionX, suggestionY, "Open Sans Semibold", Font.PLAIN, String.format("%.1f", roundedWinrate), stoneRadius, stoneRadius * 1.5, 1);
-                        drawString(g, suggestionX, suggestionY + stoneRadius * 2 / 5, "Open Sans", getPlayoutsString(move.playouts), (float) (stoneRadius * 0.8), stoneRadius * 1.4);
+                        drawString(g, suggestionX, suggestionY, "Open Sans Semibold", Font.PLAIN, String.format("%.1f", roundedWinrate), stoneRadius * 2, stoneRadius * 1.5, 0);
                     }
                 }
             }

@@ -5,9 +5,9 @@ import featurecat.omega.Util;
 import java.util.List;
 
 public class LeelazData {
-    double[] moveProbabilities = new double[19 * 19];
-    double passProbability;
-    double winrate;
+    public double[] moveProbabilities = new double[19 * 19];
+    public double passProbability;
+    public double winrate;
 
     public LeelazData(List<String> lines) {
         // there will be 19 lines of 19 numbers,
@@ -41,8 +41,8 @@ public class LeelazData {
         StringBuilder sb = new StringBuilder();
         sb.append("[\n");
         sb.append(Util.toStringFlatTo2DArray(moveProbabilities, 19));
-        sb.append("Pass: " + passProbability + "\n");
-        sb.append("Winrate: " + winrate + "\n");
+        sb.append("pass: " + passProbability + "\n");
+        sb.append("winrate: " + winrate + "\n");
         sb.append("]" + "\n");
 
         return sb.toString();
