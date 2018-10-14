@@ -200,20 +200,21 @@ public class BoardRenderer {
         final double NUMBER_OF_CHOICES_FACTOR = 4;
 
         System.out.println(Omega.leelaz.heatmap);
-        if (Omega.leelaz.heatmap != null) {
+        final LeelazData heatmap = Omega.leelaz.heatmap;
+        if (heatmap != null) {
             double maxProbability = 0;
 
-            for (double d : Omega.leelaz.heatmap.moveProbabilities) {
+            for (double d : heatmap.moveProbabilities) {
                 maxProbability = Math.max(maxProbability, d);
             }
 
             final double MIN_PROBABILITY_TO_DISPLAY = Math.min(Math.max(0.001, (1 - maxProbability) / (NUMBER_OF_CHOICES_FACTOR)), maxProbability / (NUMBER_OF_CHOICES_FACTOR));
 
-            maxProbability = Math.max(maxProbability, Omega.leelaz.heatmap.passProbability);
+            maxProbability = Math.max(maxProbability, heatmap.passProbability);
 
             for (int i = 0; i < Board.BOARD_SIZE; i++) {
                 for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                    double probability = Omega.leelaz.heatmap.moveProbabilities[i + j * Board.BOARD_SIZE];
+                    double probability = heatmap.moveProbabilities[i + j * Board.BOARD_SIZE];
                     double percentOfMax = (probability - MIN_PROBABILITY_TO_DISPLAY) / (maxProbability - MIN_PROBABILITY_TO_DISPLAY);
                     boolean isMax = probability == maxProbability;
                     if (!isMax && probability < MIN_PROBABILITY_TO_DISPLAY) {

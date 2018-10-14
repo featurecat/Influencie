@@ -85,6 +85,7 @@ public class Leelaz {
                         if (line.startsWith("=")) {
                             if (heatmapStrings.size() >= 21) {
                                 isParsingHeatmap = false;
+                                notify();
                                 heatmapPromise.accept(new LeelazData(heatmapStrings));
                             } // otherwise it must be a different command. wow we need a more robust system but this should work.
                         } else if (!(line = line.trim()).isEmpty() && Character.isDigit(line.charAt(0)) || line.matches("(pass: |winrate: ).+")) {
@@ -139,9 +140,13 @@ public class Leelaz {
      * @param heatmapPromise this function will be called when the heatmap data is ready.
      */
     public void heatmap(Consumer<LeelazData> heatmapPromise) {
-        if (isParsingHeatmap) {
-            System.out.println("Leelaz is already parsing a heatmap. Abort");
-            return;
+        while (isParsingHeatmap) {
+            System.out.println("Leelaz is already parsing a heatmap.");
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         isParsingHeatmap = true;
         heatmapStrings = new ArrayList<>();

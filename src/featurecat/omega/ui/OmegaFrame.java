@@ -45,7 +45,7 @@ public class OmegaFrame extends JFrame {
 
         boardRenderer = new BoardRenderer();
 
-        // on 1080p screens in Windows, this is a good width/height. removing a default size causes problems in Linux
+        // we need a default size or else problems in Linux
         setSize(657, 687);
         setLocationRelativeTo(null); // start centered
         setExtendedState(Frame.MAXIMIZED_BOTH); // start maximized
