@@ -141,7 +141,6 @@ public class Leelaz {
      */
     public void heatmap(Consumer<LeelazData> heatmapPromise) {
         while (isParsingHeatmap) {
-            System.out.println("Leelaz is already parsing a heatmap.");
             try {
                 wait();
             } catch (InterruptedException e) {
