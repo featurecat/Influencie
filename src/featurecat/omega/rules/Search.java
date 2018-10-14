@@ -10,6 +10,8 @@ import java.util.ArrayList;
 
 public class Search {
 
+    public static String directory = "";
+
     public static void getHeatmapsOfMatchingPositions(Stone[] position, String[] filenames) {
         ArrayList<SearchData> positionList = new ArrayList<>();
         for (String filename : filenames) {
@@ -49,7 +51,7 @@ public class Search {
         while (fileBoard.previousMove()) ;
         BoardHistoryList boardHistoryList = fileBoard.getHistory();
         ArrayList<SearchData> positionList = new ArrayList<>();
-        int moveNumber = 1;
+        int moveNumber = 0;
         while (true) {
             BoardData boardData = boardHistoryList.next();
             if (boardData == null) {

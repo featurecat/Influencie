@@ -3,6 +3,7 @@ package featurecat.omega.ui;
 import featurecat.omega.Omega;
 import featurecat.omega.rules.Board;
 import featurecat.omega.analysis.SGFParser;
+import featurecat.omega.rules.Search;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -90,6 +91,18 @@ public class OmegaFrame extends JFrame {
             } catch (IOException err) {
                 JOptionPane.showConfirmDialog(null, "Failed to open the SGF file.", "Error", JOptionPane.ERROR);
             }
+        }
+    }
+
+    public static void openFolder() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setMultiSelectionEnabled(false);
+        int result = chooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            System.out.println(file.getPath());
+            Search.directory = file.getPath();
         }
     }
 
