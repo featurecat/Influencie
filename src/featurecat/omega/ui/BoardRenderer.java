@@ -1,8 +1,5 @@
 package featurecat.omega.ui;
 
-import featurecat.omega.Console;
-import featurecat.omega.analysis.LeelazData;
-import featurecat.omega.analysis.MoveData;
 import featurecat.omega.rules.Zobrist;
 import featurecat.omega.Omega;
 import featurecat.omega.rules.Board;
@@ -16,7 +13,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class BoardRenderer {
@@ -48,13 +44,17 @@ public class BoardRenderer {
         setupSizeParameters();
 
         drawBackground(g);
-        drawStones();
 
-        renderImages(g);
-
-        drawMoveNumbers(g);
         drawHeatmap(g);
+        drawIntersections(g);
 
+        if (Omega.showStones) {
+            drawStones();
+
+            renderImages(g);
+            // actually, if you end the if statement here, Influencie could be a nice blind-go client :). or as-is too is good.
+            drawMoveNumbers(g);
+        }
     }
 
     /**
@@ -70,13 +70,25 @@ public class BoardRenderer {
         stoneRadius = squareLength / 2 - 1;
     }
 
+    public static int intersectionColor = 0;
+    private int cachedIntersectionColor = intersectionColor;
+
+    public static boolean blackStoneOutline = false;
+    private boolean cachedBlackStoneOutline = blackStoneOutline;
+
+    public static boolean showIntersectionsOverHeatmap = true;
+    private boolean cachedShowIntersectionsOverHeatmap = showIntersectionsOverHeatmap;
+
     /**
      * Draw the green background and go board with lines. We cache the image for a performance boost.
      */
     private void drawBackground(Graphics2D g0) {
         // draw the cached background image if frame size changes
         if (cachedBackgroundImage == null || cachedBackgroundImage.getWidth() != Omega.frame.getWidth() ||
-                cachedBackgroundImage.getHeight() != Omega.frame.getHeight()) {
+                cachedBackgroundImage.getHeight() != Omega.frame.getHeight() ||
+                cachedIntersectionColor != intersectionColor || cachedBoardTypeIndex != boardTypeIndex ||
+        cachedShowIntersectionsOverHeatmap != showIntersectionsOverHeatmap) {
+            cachedShowIntersectionsOverHeatmap = showIntersectionsOverHeatmap;
 
             cachedBackgroundImage = new BufferedImage(Omega.frame.getWidth(), Omega.frame.getHeight(),
                     BufferedImage.TYPE_INT_ARGB);
@@ -86,8 +98,18 @@ public class BoardRenderer {
             // draw the wooden background
             drawWoodenBoard(g);
 
-            // draw the lines
-            g.setColor(Color.BLACK);
+            g.dispose();
+        }
+
+        //g0.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g0.drawImage(cachedBackgroundImage, 0, 0, null);
+    }
+
+    private void drawIntersections(Graphics2D g) {
+        // draw the lines
+        cachedIntersectionColor = intersectionColor;
+        if (intersectionColor != 1) {
+            g.setColor(intersectionColor == 2 ? Color.WHITE : Color.BLACK);
             for (int i = 0; i < Board.BOARD_SIZE; i++) {
                 g.drawLine(x + scaledMargin, y + scaledMargin + squareLength * i,
                         x + scaledMargin + availableLength - 1, y + scaledMargin + squareLength * i);
@@ -110,12 +132,7 @@ public class BoardRenderer {
                     fillCircle(g, centerX, centerY, starPointRadius);
                 }
             }
-
-            g.dispose();
         }
-
-        //g0.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g0.drawImage(cachedBackgroundImage, 0, 0, null);
     }
 
     /**
@@ -125,8 +142,10 @@ public class BoardRenderer {
         // draw a new image if frame size changes or board state changes
         if (cachedStonesImage == null || cachedStonesImage.getWidth() != boardLength ||
                 cachedStonesImage.getHeight() != boardLength ||
-                !cachedZhash.equals(Omega.board.getData().zobrist)) {
+                !cachedZhash.equals(Omega.board.getData().zobrist) ||
+                cachedBlackStoneOutline != blackStoneOutline) {
 
+            cachedBlackStoneOutline = blackStoneOutline;
             cachedStonesImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
             cachedStonesShadowImage = new BufferedImage(boardLength, boardLength, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = cachedStonesImage.createGraphics();
@@ -188,89 +207,70 @@ public class BoardRenderer {
         }
     }
 
+    public static boolean useGradient = true;
+    public static int maxAlpha = 180;
+    public static int whiteAuraRed = 0x00; // old 0x184bb5
+    public static int whiteAuraGreen = 0x80;// new 0x00B2FF 6e
+    public static int whiteAuraBlue = 0xFF; // 0080ff
+
+    public static int blackAuraRed = 0xBF;
+    public static int blackAuraGreen = 0x00; // old 0xf88a00 new 0xFFAE00 8c
+    public static int blackAuraBlue = 0x4F; // ff8000
+
     /**
      * Draw all of Leelaz's suggestions as colored stones with winrate/playout statistics overlayed
      */
     private void drawHeatmap(Graphics2D g) {
-        final int MIN_ALPHA = 32;
-        final int MAX_ALPHA = 240;
-        final int MIN_ALPHA_TO_DISPLAY_TEXT = 64;
-        final double HUE_SCALING_FACTOR = 3.0;
-        final double ALPHA_SCALING_FACTOR = 5.0;
-        final double NUMBER_OF_CHOICES_FACTOR = 4;
-
-        System.out.println(Omega.leelaz.heatmap);
-        final LeelazData heatmap = Omega.leelaz.heatmap;
-        if (heatmap != null) {
-            double maxProbability = 0;
-
-            for (double d : heatmap.moveProbabilities) {
-                maxProbability = Math.max(maxProbability, d);
-            }
-
-            final double MIN_PROBABILITY_TO_DISPLAY = Math.min(Math.max(0.001, (1 - maxProbability) / (NUMBER_OF_CHOICES_FACTOR)), maxProbability / (NUMBER_OF_CHOICES_FACTOR));
-
-            maxProbability = Math.max(maxProbability, heatmap.passProbability);
-
+        if (Omega.showHeatmap) {
+            final double[] heatmap = Omega.board.getInfluenceHeatmap();
             for (int i = 0; i < Board.BOARD_SIZE; i++) {
                 for (int j = 0; j < Board.BOARD_SIZE; j++) {
-                    double probability = heatmap.moveProbabilities[i + j * Board.BOARD_SIZE];
-                    double percentOfMax = (probability - MIN_PROBABILITY_TO_DISPLAY) / (maxProbability - MIN_PROBABILITY_TO_DISPLAY);
-                    boolean isMax = probability == maxProbability;
-                    if (!isMax && probability < MIN_PROBABILITY_TO_DISPLAY) {
-                        continue;
-                    }
 
                     int suggestionX = x + scaledMargin + squareLength * i;
                     int suggestionY = y + scaledMargin + squareLength * j;
+                    double heatValue = heatmap[Board.getIndex(i, j)];
 
-                    // -0.32 = Greenest hue, 0 = Reddest hue
-                    float hue = (float) (-0.32 * Math.max(0, Math.log(percentOfMax) / HUE_SCALING_FACTOR + 1));
-                    float saturation = 0.75f; //saturation
-                    float brightness = 0.85f; //brightness
-                    int alpha = (int) (MIN_ALPHA + (MAX_ALPHA - MIN_ALPHA) * Math.max(0, Math.log(percentOfMax) /
-                            ALPHA_SCALING_FACTOR + 1));
+                    double alphaConst = Math.min(255, useGradient ? maxAlpha : maxAlpha * 1.75);
+                    int alpha = (int) Math.abs(alphaConst * (heatValue - 0.5) * 2);
 
-                    Color hsbColor = Color.getHSBColor(hue, saturation, brightness);
-                    Color color = new Color(hsbColor.getRed(), hsbColor.getBlue(), hsbColor.getGreen(), alpha);
+                    Color hsbColor = heatValue > 0.5 ? new Color(blackAuraRed, blackAuraGreen, blackAuraBlue) : new Color(whiteAuraRed, whiteAuraGreen, whiteAuraBlue);
+                    Color color = new Color(hsbColor.getRed(), hsbColor.getGreen(), hsbColor.getBlue(), alpha);
 
-                    drawShadow(g, suggestionX, suggestionY, true, (float) alpha / 255);
+                    Paint original = g.getPaint();
                     g.setColor(color);
-                    fillCircle(g, suggestionX, suggestionY, stoneRadius);
-
-                    // highlight LeelaZero's top recommended move
-                    int strokeWidth = 1;
-                    if (isMax) { // this is the best move
-                        strokeWidth = 2;
-                        g.setColor(Color.RED);
-                        g.setStroke(new BasicStroke(strokeWidth));
+                    if (useGradient) {
+                        Point2D center = new Point2D.Float(suggestionX, suggestionY);
+                        float radius = squareLength * 2 + 2;
+                        float[] dist = {0.0f, 0.5f + 0.5f * (float) Math.max(0, Math.log((float) alpha / alphaConst) / 0.8 + 1)}; // out of 0.7, 0.8, 0.9, 1.0, 1.1, I liked 0.8 best
+                        Color[] colors = {color, new Color(color.getRed(), color.getGreen(), color.getBlue(), 0)};
+                        RadialGradientPaint p =
+                                new RadialGradientPaint(center, radius, dist, colors);
+                        g.setPaint(p);
+                        int gradRadius = (int) radius;
+                        g.fillRect(suggestionX - gradRadius, suggestionY - gradRadius, gradRadius * 2 + 2, gradRadius * 2 + 2);
                     } else {
-                        g.setColor(color.darker());
+                        g.fillRect(suggestionX - stoneRadius, suggestionY - stoneRadius, squareLength, squareLength);
                     }
-                    drawCircle(g, suggestionX, suggestionY, stoneRadius - strokeWidth / 2);
+                    g.setPaint(original);
                     g.setStroke(new BasicStroke(1));
-
-                    if (isMax || alpha >= MIN_ALPHA_TO_DISPLAY_TEXT) {
-
-                        double roundedWinrate = Math.round(probability * 1000) / 10.0;
-                        g.setColor(Color.BLACK);
-
-                        drawString(g, suggestionX, suggestionY, "Open Sans Semibold", Font.PLAIN, String.format("%.1f", roundedWinrate), stoneRadius * 2, stoneRadius * 1.5, 0);
-                    }
                 }
             }
         }
     }
 
+    public static int boardTypeIndex = 1;
+    private int cachedBoardTypeIndex = boardTypeIndex;
+
     private void drawWoodenBoard(Graphics2D g) {
         // fancy version
         try {
             int shadowRadius = (int) (boardLength * MARGIN / 6);
-            g.drawImage(ImageIO.read(new File("assets/board.png")), x - 2 * shadowRadius, y - 2 * shadowRadius, boardLength + 4 * shadowRadius, boardLength + 4 * shadowRadius, null);
+            cachedBoardTypeIndex = boardTypeIndex;
+            g.drawImage(ImageIO.read(new File("assets/board" + boardTypeIndex + ".png")), x - 2 * shadowRadius, y - 2 * shadowRadius, boardLength + 4 * shadowRadius, boardLength + 4 * shadowRadius, null);
             g.setStroke(new BasicStroke(shadowRadius * 2));
-            // draw border
-            g.setColor(new Color(0, 0, 0, 50));
-            g.drawRect(x - shadowRadius, y - shadowRadius, boardLength + 2 * shadowRadius, boardLength + 2 * shadowRadius);
+//             draw border
+//            g.setColor(new Color(0, 0, 0, 50));
+//            g.drawRect(x - shadowRadius, y - shadowRadius, boardLength + 2 * shadowRadius, boardLength + 2 * shadowRadius);
             g.setStroke(new BasicStroke(1));
         } catch (IOException e) {
             e.printStackTrace();
@@ -369,6 +369,10 @@ public class BoardRenderer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                if (blackStoneOutline) {
+                    g.setColor(Color.WHITE);
+                    g.drawOval(centerX - stoneRadius, centerY - stoneRadius, 2 * stoneRadius, 2 * stoneRadius);
+                }
                 break;
 
             case WHITE:
@@ -378,6 +382,8 @@ public class BoardRenderer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                g.setColor(Color.BLACK);
+                g.drawOval(centerX - stoneRadius, centerY - stoneRadius, 2 * stoneRadius, 2 * stoneRadius);
                 break;
 
             case BLACK_GHOST:

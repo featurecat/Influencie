@@ -1,7 +1,6 @@
 package featurecat.omega.rules;
 
 import featurecat.omega.Omega;
-import featurecat.omega.analysis.LeelazData;
 import featurecat.omega.analysis.SGFParser;
 
 import javax.swing.*;
@@ -19,7 +18,6 @@ public class Search {
         }
         for (SearchData searchData : positionList) {
             Board board = new Board(searchData.boardHistoryList);
-            Omega.leelaz.clearBoard();
             int moveNumber = searchData.moveNumber;
             System.out.println("movenumber " + moveNumber);
             while (board.previousMove()) ;
@@ -27,9 +25,6 @@ public class Search {
                 board.nextMove();
             }
             Omega.board = board;
-            Omega.leelaz.heatmap((LeelazData data) -> {
-                System.out.println(data);
-            });
         }
     }
 

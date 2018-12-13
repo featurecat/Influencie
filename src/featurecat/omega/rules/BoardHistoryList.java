@@ -99,6 +99,14 @@ public class BoardHistoryList {
         return head.getData().moveNumberList;
     }
 
+    public void toStart() {
+        while (previous() != null);
+    }
+
+    public BoardHistoryNode getCurrentHistoryNode() {
+        return head;
+    }
+
     /**
      * @param data the board position to check against superko
      * @return whether or not the given position violates the superko rule at the head's state

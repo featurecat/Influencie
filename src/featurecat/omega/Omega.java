@@ -1,7 +1,5 @@
 package featurecat.omega;
 
-import featurecat.omega.analysis.Leelaz;
-import featurecat.omega.analysis.LeelazData;
 import featurecat.omega.rules.Board;
 import featurecat.omega.rules.Search;
 import featurecat.omega.rules.SearchData;
@@ -18,11 +16,11 @@ import java.util.ArrayList;
  */
 public class Omega {
     public static OmegaFrame frame;
-    public static Leelaz leelaz;
     public static Board board;
     public static String version = "0.1";
+    public static boolean showHeatmap = true;
+    public static boolean showStones = true;
 
-    public static final String NETWORK_STRING = "network.gz"; // todo fix hardcoded values
     public static PlaceMode placeMode = PlaceMode.ALTERNATING;
 
     /**
@@ -31,15 +29,12 @@ public class Omega {
     public static void main(String[] args) throws IOException, ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-        leelaz = new Leelaz();
-
         board = new Board();
         frame = new OmegaFrame();
         
     }
 
     public static void shutdown() {
-        leelaz.shutdown();
         System.exit(0);
     }
 

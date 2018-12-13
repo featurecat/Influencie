@@ -9,6 +9,10 @@ public class BoardHistoryNode {
 
     private BoardData data;
 
+    public boolean hasNext() {
+        return next != null;
+    }
+
     /**
      * Initializes a new list node
      */

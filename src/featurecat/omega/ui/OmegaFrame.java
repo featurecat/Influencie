@@ -9,14 +9,14 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -27,22 +27,24 @@ public class OmegaFrame extends JFrame {
 
     private final BufferStrategy bs;
 
-    static {
-        // load fonts
-        try {
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, OmegaFrame.class.getResourceAsStream("/fonts/OpenSans-Regular.ttf")));
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, OmegaFrame.class.getResourceAsStream("/fonts/OpenSans-Semibold.ttf")));
-        } catch (IOException | FontFormatException e) {
-            e.printStackTrace();
-        }
-    }
+    private final List<Slider> sliders;
+
+//    static {
+//        // load fonts
+//        try {
+//            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, OmegaFrame.class.getResourceAsStream("/fonts/OpenSans-Regular.ttf")));
+//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, OmegaFrame.class.getResourceAsStream("/fonts/OpenSans-Semibold.ttf")));
+//        } catch (IOException | FontFormatException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     /**
      * Creates a window
      */
     public OmegaFrame() {
-        super("Omega");
+        super("Influencie");
 
         boardRenderer = new BoardRenderer();
 
@@ -62,6 +64,38 @@ public class OmegaFrame extends JFrame {
         this.addKeyListener(input);
         this.addMouseWheelListener(input);
         this.addMouseMotionListener(input);
+
+        sliders = new ArrayList<>();
+
+        Slider.insets = this.getInsets();
+
+        int y = 5;
+        int x = 10;
+        int width = 30; // today just ISNT one of those days for writing good code.
+        int length = 150;
+        sliders.add(new Slider(x, y+0*width, length, "White Aura R", 0, 255, BoardRenderer.whiteAuraRed, new Color(0xa3, 0x36, 0x43).brighter(), Color.YELLOW, val -> BoardRenderer.whiteAuraRed = (int)val));
+        sliders.add(new Slider(x, y+1*width, length, "White Aura G", 0, 255, BoardRenderer.whiteAuraGreen, new Color(0x4b, 0x91, 0x30).brighter(), Color.BLACK, val -> BoardRenderer.whiteAuraGreen = (int)val));
+        sliders.add(new Slider(x, y+2*width, length, "White Aura B", 0, 255, BoardRenderer.whiteAuraBlue, new Color(0x2e, 0x42, 0x72).brighter().brighter(), Color.CYAN, val -> BoardRenderer.whiteAuraBlue = (int)val));
+
+        y += width/2;
+
+        sliders.add(new Slider(x, y+3*width, length, "Black Aura R", 0, 255, BoardRenderer.blackAuraRed, new Color(0xa3, 0x36, 0x43).brighter(), Color.YELLOW, val -> BoardRenderer.blackAuraRed = (int)val));
+        sliders.add(new Slider(x, y+4*width, length, "Black Aura G", 0, 255, BoardRenderer.blackAuraGreen, new Color(0x4b, 0x91, 0x30).brighter(), Color.BLACK, val -> BoardRenderer.blackAuraGreen = (int)val));
+        sliders.add(new Slider(x, y+5*width, length, "Black Aura B", 0, 255, BoardRenderer.blackAuraBlue, new Color(0x2e, 0x42, 0x72).brighter().brighter(), Color.CYAN, val -> BoardRenderer.blackAuraBlue = (int)val));
+
+        y += width/2;
+
+        sliders.add(new Slider(x, y+6*width, length, "Intensity", 0, 255, BoardRenderer.maxAlpha, new Color(0xB6,0x00,0x89).brighter(), Color.BLACK, val -> BoardRenderer.maxAlpha = (int)val));
+        sliders.add(new Slider(x, y+7*width, length, "Stone Influence", 1, 20, Board.stoneInfluence, new Color(0xB6,0x00,0x89).brighter(), Color.BLACK, val -> Board.stoneInfluence = (int)val));
+        sliders.add(new Slider(x, y+8*width, length, "Gradients", 0, 1, BoardRenderer.useGradient? 1 : 0, new Color(0xB6,0x00,0x89).brighter(), Color.BLACK, val -> BoardRenderer.useGradient = ((int)val) == 1));
+
+        y += width/2;
+
+        sliders.add(new Slider(x, y+9*width, length, "Board", 0, 3, BoardRenderer.boardTypeIndex, Color.PINK, Color.BLACK, val -> BoardRenderer.boardTypeIndex = (int) val));
+        sliders.add(new Slider(x, y+10*width, length, "Intersection Color", 0, 2, BoardRenderer.intersectionColor, Color.WHITE, Color.BLACK, val -> BoardRenderer.intersectionColor = (int)val));
+        sliders.add(new Slider(x, y+11*width, length, "Show Stones", 0, 1, Omega.showStones? 1 : 0, Color.PINK, Color.BLACK, val -> Omega.showStones = (int) val == 1));
+        sliders.add(new Slider(x, y+12*width, length, "Show Heatmap", 0, 1, Omega.showHeatmap? 1 : 0, Color.PINK, Color.BLACK, val -> Omega.showHeatmap = (int) val == 1));
+        sliders.add(new Slider(x, y+13*width, length, "Outline Black", 0, 1, BoardRenderer.blackStoneOutline? 1 : 0, Color.PINK, Color.BLACK, val -> BoardRenderer.blackStoneOutline = (int) val == 1));
 
         // necessary for Windows users - otherwise Lizzie shows a blank white screen on startup until updates occur.
         repaint();
@@ -133,6 +167,10 @@ public class OmegaFrame extends JFrame {
             e.printStackTrace();
         }
 
+        for (Slider s : sliders) {
+            s.render(g);
+        }
+
         int maxSize = (int) (Math.min(getWidth(), getHeight() - topInset) * 0.98);
         maxSize = Math.max(maxSize, Board.BOARD_SIZE + 5); // don't let maxWidth become too small
 
@@ -167,6 +205,28 @@ public class OmegaFrame extends JFrame {
 
         if (boardCoordinates != null) {
             Omega.board.place(boardCoordinates[0], boardCoordinates[1]);
+        } else {
+            for (Slider s : sliders) {
+                if (s.onClicked(x, y)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public void onDragged(int x, int y) {
+        // check for board click
+        int[] boardCoordinates = boardRenderer.convertScreenToCoordinates(x, y);
+
+        if (boardCoordinates != null) {
+            // dont do anything for drags
+        } else {
+            // but in case its not on the board, good for sliders
+            for (Slider s : sliders) {
+                if (s.onClicked(x, y)) {
+                    break;
+                }
+            }
         }
     }
 

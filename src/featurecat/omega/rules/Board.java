@@ -1,7 +1,13 @@
 package featurecat.omega.rules;
 
+import com.sun.jdi.DoubleValue;
 import featurecat.omega.Omega;
+import featurecat.omega.ui.BoardRenderer;
 import featurecat.omega.ui.PlaceMode;
+
+import java.util.*;
+import java.util.function.DoubleFunction;
+import java.util.stream.Collectors;
 
 public class Board {
     public static final int BOARD_SIZE = 19;
@@ -39,7 +45,11 @@ public class Board {
      * @return the array index
      */
     public static int getIndex(int x, int y) {
-        return x * Board.BOARD_SIZE + y;
+        return getIndex(x, y, BOARD_SIZE);
+    }
+
+    public static int getIndex(int x, int y, int LENGTH) {
+        return x * LENGTH + y;
     }
 
     /**
@@ -92,7 +102,7 @@ public class Board {
             if (next != null && next.lastMove == null) {
                 // this is the next move in history. Just increment history so that we don't erase the redo's
                 history.next();
-                Omega.leelaz.playMove(color, "pass");
+                Omega.frame.repaint();
                 return;
             }
 
@@ -104,8 +114,6 @@ public class Board {
             // build the new game state
             BoardData newState = new BoardData(stones, null, color, !history.isBlacksTurn(), zobrist, moveNumber, moveNumberList);
 
-            // update leelaz with pass
-            Omega.leelaz.playMove(color, "pass");
 
             // update history with pass
             history.add(newState);
@@ -138,8 +146,8 @@ public class Board {
             if (next != null && next.lastMove != null && next.lastMove[0] == x && next.lastMove[1] == y) {
                 // this is the next coordinate in history. Just increment history so that we don't erase the redo's
                 history.next();
+                Omega.frame.repaint();
                 // should be opposite from the bottom case
-                Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
                 return;
             }
 
@@ -178,8 +186,6 @@ public class Board {
             if (isSuicidal || history.violatesSuperko(newState))
                 return;
 
-            Omega.leelaz.playMove(color, convertCoordinatesToName(x, y));
-
             // update history with this coordinate
             history.add(newState);
 
@@ -210,7 +216,7 @@ public class Board {
                 colorToPlay = Stone.WHITE;
                 break;
 
-            case ALTERNATING:
+            case ALTERNATING: // TODO we need a better way of choosing the color for alternating.
             default:
                 colorToPlay = history.isBlacksTurn() ? Stone.BLACK : Stone.WHITE;
                 break;
@@ -379,11 +385,7 @@ public class Board {
         synchronized (this) {
             if (history.next() != null) {
                 // update leelaz board position, before updating to next node
-                if (history.getData().lastMove == null) {
-                    Omega.leelaz.playMove(history.getLastMoveColor(), "pass");
-                } else {
-                    Omega.leelaz.playMove(history.getLastMoveColor(), convertCoordinatesToName(history.getLastMove()[0], history.getLastMove()[1]));
-                }
+                history.getData(); // todo not needed just kept for paranoia
                 Omega.frame.repaint();
                 return true;
             }
@@ -405,11 +407,72 @@ public class Board {
     public boolean previousMove() {
         synchronized (this) {
             if (history.previous() != null) {
-                Omega.leelaz.undo();
                 Omega.frame.repaint();
                 return true;
             }
             return false;
         }
     }
+
+    public static int stoneInfluence = 7;
+
+    public double[] getInfluenceHeatmap() {
+        double[] heatmap = new double[BOARD_SIZE * BOARD_SIZE];
+
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            for (int y = 0; y < BOARD_SIZE; y++) {
+                int index = getIndex(x, y);
+                if (getStones()[index] != Stone.EMPTY) {
+                    int initial = getStones()[index].isBlack() ? 1 : -1;
+                    floodAdd(heatmap, new boolean[BOARD_SIZE * BOARD_SIZE], x, y, x, y, initial, 1.0 / stoneInfluence);
+                }
+            }
+        }
+
+        if (BoardRenderer.useGradient) {
+            // prevent stones from being too bright
+            for (int x = 0; x < BOARD_SIZE; x++) {
+                for (int y = 0; y < BOARD_SIZE; y++) {
+                    int index = getIndex(x, y);
+                    if (getStones()[index].isBlack()) {
+                        heatmap[index] = Math.max(0, Math.min(heatmap[index], 0.5));
+                    } else if (getStones()[index].isWhite()) {
+                        heatmap[index] = Math.min(0, Math.max(heatmap[index], -0.5));
+                    }
+                }
+            }
+        }
+
+        return Arrays.stream(heatmap).map(val -> Math.max(0, Math.min(1, (val + 1) / 2))).toArray();
+    }
+
+    private void floodAdd(double[] heatmap, boolean[] seen, int originalX, int originalY, int x, int y, double initial, double degrade) {
+        if (isValid(x, y) && !seen[getIndex(x, y)]) { // we havent seen before
+            heatmap[getIndex(x, y)] += initial;
+            seen[getIndex(x, y)] = true;
+            if (initial > 0) {
+                // if we run into enemy, we cant repopulate, is the rule.
+                if (getStones()[getIndex(x, y)].isWhite()) {
+                    return;
+                }
+                initial = Math.max(0, initial - degrade);
+            } else {
+                if (getStones()[getIndex(x, y)].isBlack()) {
+                    return;
+                }
+                initial = Math.min(0, initial + degrade);
+            }
+            if (initial != 0) {
+                if (originalX - x >= 0)
+                    floodAdd(heatmap, seen, originalX, originalY, x - 1, y, initial, degrade);
+                if (originalX - x <= 0)
+                    floodAdd(heatmap, seen, originalX, originalY, x + 1, y, initial, degrade);
+                if (originalY - y >= 0)
+                    floodAdd(heatmap, seen, originalX, originalY, x, y - 1, initial, degrade);
+                if (originalY - y <= 0)
+                    floodAdd(heatmap, seen, originalX, originalY, x, y + 1, initial, degrade);
+            }
+        }
+    }
+
 }

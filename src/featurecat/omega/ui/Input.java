@@ -16,8 +16,8 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
     public Input() {
         command(KeyEvent.VK_RIGHT, this::redo);
         command(KeyEvent.VK_LEFT, this::undo);
-        command(KeyEvent.VK_O, () -> Omega.frame.openSgf());
-        command(KeyEvent.VK_S, () -> Omega.frame.openFolder());
+        command(KeyEvent.VK_O, OmegaFrame::openSgf);
+//        command(KeyEvent.VK_S, OmegaFrame::openFolder);
         command(KeyEvent.VK_HOME, () -> {
             while (Omega.board.previousMove()) ;
         });
@@ -28,6 +28,16 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         command(KeyEvent.VK_B, () -> Omega.placeMode = PlaceMode.BLACK);
         command(KeyEvent.VK_A, () -> Omega.placeMode = PlaceMode.ALTERNATING);
         command(KeyEvent.VK_R, () -> Omega.placeMode = PlaceMode.REMOVE);
+        command(KeyEvent.VK_D, () -> Omega.placeMode = PlaceMode.SELECT);
+        command(KeyEvent.VK_SPACE, () -> {
+            Omega.showHeatmap ^= true;
+            Omega.frame.repaint();
+        }); // toggle heatmap
+
+        command(KeyEvent.VK_H, () -> {
+            Omega.showStones ^= true;
+            Omega.frame.repaint();
+        }); // toggle stones display
     }
 
     private void command(int keyCode, Runnable action) {
@@ -67,7 +77,10 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
 
+        Omega.frame.onDragged(x, y);
     }
 
     @Override
@@ -75,7 +88,9 @@ public class Input implements MouseListener, KeyListener, MouseWheelListener, Mo
         int x = e.getX();
         int y = e.getY();
 
-        Omega.frame.onMouseMoved(x, y);
+        if (Omega.frame != null) {
+            Omega.frame.onMouseMoved(x, y);
+        }
     }
 
     @Override
