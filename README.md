@@ -3,6 +3,8 @@ A fun project for visualizing influence in the game of Go.
 
 ![screenshot](/screen1.png?raw=true)
 
+Download: https://github.com/featurecat/Influencie/releases/tag/1.0
+
 Most of the controls are on the left side of the screen. In addition to those, you can press:
 - Right click: undo
 - Left/Right arrow keys: undo/redo
@@ -14,7 +16,6 @@ Most of the controls are on the left side of the screen. In addition to those, y
 - Space: Toggle heatmap
 - H: Toggle hiding the stones on the board.
 
-More screenshots:
 ![screenshot](/screen2.png?raw=true)
 ![screenshot](/screen3.png?raw=true)
 ![screenshot](/screen4.png?raw=true)
